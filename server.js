@@ -17,56 +17,79 @@ function useMongo() {
     return !!(process.env.MONGODB_URI && mongoose.connection.readyState === 1);
 }
 
+// Catch mongoose connection errors to prevent unhandled rejection crashes
+mongoose.connection.on('error', (err) => {
+    console.error('Mongoose connection error:', err.message);
+});
+
 if (process.env.MONGODB_URI) {
     console.log('Connecting to cloud MongoDB database...');
-    mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 2000 })
+    mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 3000 })
         .then(() => {
             console.log('Successfully connected to Cloud MongoDB!');
         })
         .catch(err => {
-            console.error('MongoDB connection error. Falling back to local file-based database.', err);
+            console.error('MongoDB connection error. Falling back to local file-based database.', err.message);
         });
 } else {
-    console.warn('WARNING: MONGODB_URI environment variable is not defined. CMS will run in Local Fallback Mode.');
+    console.warn('WARNING: MONGODB_URI not defined. CMS will run in Local Fallback Mode.');
 }
 
+// DynamicStore: Lazily loads MongoStore when Mongoose is connected, falls back to MemoryStore
+// This prevents crashes when the database is unreachable at startup time.
+class DynamicStore extends session.Store {
+    constructor() {
+        super();
+        this.memoryStore = new session.MemoryStore();
+        this._mongoStore = null;
+    }
+
+    _getActive() {
+        if (mongoose.connection.readyState === 1) {
+            if (!this._mongoStore) {
+                // Lazily initialize MongoStore once the Mongoose connection is ready
+                const { MongoStore } = require('connect-mongo');
+                this._mongoStore = MongoStore.create({
+                    client: mongoose.connection.getClient(),
+                    collectionName: 'sessions',
+                    ttl: 14 * 24 * 60 * 60
+                });
+                this._mongoStore.on('error', (err) => {
+                    console.error('MongoStore session error:', err.message);
+                });
+                console.log('Session store switched to MongoStore (cloud database).');
+            }
+            return this._mongoStore;
+        }
+        return this.memoryStore;
+    }
+
+    get(sid, cb) { this._getActive().get(sid, cb); }
+    set(sid, sess, cb) { this._getActive().set(sid, sess, cb); }
+    destroy(sid, cb) { this._getActive().destroy(sid, cb); }
+    touch(sid, sess, cb) {
+        const store = this._getActive();
+        if (store.touch) store.touch(sid, sess, cb);
+        else cb();
+    }
+}
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// Session Configuration
+
+// Session Configuration with DynamicStore
 const sessionOptions = {
-    secret: 'wow-moments-secret-key-12345',
+    secret: process.env.SESSION_SECRET || 'wow-moments-secret-key-12345',
     resave: false,
     saveUninitialized: false,
+    store: new DynamicStore(),
     cookie: {
-        secure: false,
+        secure: process.env.NODE_ENV === 'production',
         maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days
     }
 };
-
-if (process.env.MONGODB_URI) {
-    const { MongoStore } = require('connect-mongo');
-    sessionOptions.store = MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI,
-        collectionName: 'sessions',
-        ttl: 14 * 24 * 60 * 60,
-        autoRemove: 'native',
-        mongoOptions: {
-            serverSelectionTimeoutMS: 2000
-        }
-    });
-    
-    // Prevent unhandled errors from crashing the server if the database is unreachable
-    sessionOptions.store.on('error', (err) => {
-        console.error('Session store connection error:', err);
-    });
-
-    if (process.env.NODE_ENV === 'production') {
-        sessionOptions.cookie.secure = true;
-    }
-}
 
 app.use(session(sessionOptions));
 
