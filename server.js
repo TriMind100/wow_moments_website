@@ -384,7 +384,7 @@ app.delete('/api/templates/:id', requireAuth, async (req, res) => {
 
 
 // Start Server
-if (require.main === module) {
+if (!process.env.VERCEL) {
     app.listen(PORT, () => {
         console.log(`Server is running on http://localhost:${PORT}`);
     });
