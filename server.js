@@ -9,6 +9,7 @@ const mongoose = require('mongoose');
 const Template = require('./models/Template');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
 // Connect to MongoDB Atlas (if URI provided)
@@ -34,12 +35,31 @@ if (process.env.MONGODB_URI) {
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(session({
+// Session Configuration
+const sessionOptions = {
     secret: 'wow-moments-secret-key-12345',
     resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false } // Set to true if using HTTPS
-}));
+    saveUninitialized: false,
+    cookie: {
+        secure: false,
+        maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days
+    }
+};
+
+if (process.env.MONGODB_URI) {
+    const { MongoStore } = require('connect-mongo');
+    sessionOptions.store = MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
+        collectionName: 'sessions',
+        ttl: 14 * 24 * 60 * 60,
+        autoRemove: 'native'
+    });
+    if (process.env.NODE_ENV === 'production') {
+        sessionOptions.cookie.secure = true;
+    }
+}
+
+app.use(session(sessionOptions));
 
 // Serve static directories/files
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
@@ -358,6 +378,10 @@ app.delete('/api/templates/:id', requireAuth, async (req, res) => {
 
 
 // Start Server
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server is running on http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;
