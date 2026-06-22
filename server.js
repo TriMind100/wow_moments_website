@@ -100,10 +100,16 @@ function readTemplates() {
 }
 
 function writeTemplates(templates) {
+    // Vercel has a read-only filesystem — writes will silently fail there.
+    // Always use MongoDB on Vercel for persistence.
+    if (process.env.VERCEL) {
+        throw new Error('Filesystem is read-only on Vercel. MongoDB Atlas is required for saving data.');
+    }
     try {
         fs.writeFileSync(DATA_FILE, JSON.stringify(templates, null, 2));
     } catch (err) {
         console.error('Error writing templates file:', err);
+        throw err;
     }
 }
 
@@ -178,6 +184,17 @@ app.get('/api/check-auth', (req, res) => {
     }
 });
 
+// API Status — useful for diagnosing DB connection on Vercel
+app.get('/api/status', (req, res) => {
+    res.json({
+        mongoConnected: useMongo(),
+        mongoReadyState: mongoose.connection.readyState,
+        isVercel: !!process.env.VERCEL,
+        nodeEnv: process.env.NODE_ENV || 'development',
+        hasMongoDB_URI: !!process.env.MONGODB_URI
+    });
+});
+
 // Get all templates
 app.get('/api/templates', async (req, res) => {
     try {
@@ -240,7 +257,14 @@ app.post('/api/templates', requireAuth, upload.single('imageFile'), async (req, 
             return res.status(201).json(newTemplate);
         }
 
-        // Fallback to local file
+        // On Vercel without MongoDB, we cannot persist changes
+        if (process.env.VERCEL) {
+            return res.status(503).json({
+                error: 'Database not connected. To save templates on Vercel, please whitelist 0.0.0.0/0 in MongoDB Atlas → Network Access, then redeploy.'
+            });
+        }
+
+        // Fallback to local file (local development only)
         const templates = readTemplates();
         templates.push(newTemplateData);
         writeTemplates(templates);
@@ -248,7 +272,7 @@ app.post('/api/templates', requireAuth, upload.single('imageFile'), async (req, 
         res.status(201).json(newTemplateData);
     } catch (err) {
         console.error('Error adding template:', err);
-        res.status(500).json({ error: 'Server error adding template.' });
+        res.status(500).json({ error: 'Server error adding template: ' + err.message });
     }
 });
 
@@ -327,7 +351,14 @@ app.put('/api/templates/:id', requireAuth, upload.single('imageFile'), async (re
             return res.json(updatedTemplate);
         }
 
-        // Fallback to local file update
+        // On Vercel without MongoDB, we cannot persist changes
+        if (process.env.VERCEL) {
+            return res.status(503).json({
+                error: 'Database not connected. To save templates on Vercel, please whitelist 0.0.0.0/0 in MongoDB Atlas → Network Access, then redeploy.'
+            });
+        }
+
+        // Fallback to local file update (local development only)
         const templates = readTemplates();
         const index = templates.findIndex(t => t.id === id);
         templates[index] = {
@@ -339,7 +370,7 @@ app.put('/api/templates/:id', requireAuth, upload.single('imageFile'), async (re
         res.json(templates[index]);
     } catch (err) {
         console.error('Error updating template:', err);
-        res.status(500).json({ error: 'Server error updating template.' });
+        res.status(500).json({ error: 'Server error updating template: ' + err.message });
     }
 });
 
