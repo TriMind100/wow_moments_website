@@ -54,6 +54,12 @@ if (process.env.MONGODB_URI) {
         ttl: 14 * 24 * 60 * 60,
         autoRemove: 'native'
     });
+    
+    // Prevent unhandled errors from crashing the server if the database is unreachable
+    sessionOptions.store.on('error', (err) => {
+        console.error('Session store connection error:', err);
+    });
+
     if (process.env.NODE_ENV === 'production') {
         sessionOptions.cookie.secure = true;
     }
