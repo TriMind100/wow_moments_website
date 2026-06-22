@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
-const session = require('express-session');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -11,6 +12,10 @@ const Template = require('./models/Template');
 const app = express();
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
+
+// JWT secret — use env var in production
+const JWT_SECRET = process.env.JWT_SECRET || 'wow-moments-jwt-secret-12345';
+const JWT_EXPIRY = '14d';
 
 // Connect to MongoDB Atlas (if URI provided)
 function useMongo() {
@@ -35,63 +40,14 @@ if (process.env.MONGODB_URI) {
     console.warn('WARNING: MONGODB_URI not defined. CMS will run in Local Fallback Mode.');
 }
 
-// DynamicStore: Lazily loads MongoStore when Mongoose is connected, falls back to MemoryStore
-// This prevents crashes when the database is unreachable at startup time.
-class DynamicStore extends session.Store {
-    constructor() {
-        super();
-        this.memoryStore = new session.MemoryStore();
-        this._mongoStore = null;
-    }
-
-    _getActive() {
-        if (mongoose.connection.readyState === 1) {
-            if (!this._mongoStore) {
-                // Lazily initialize MongoStore once the Mongoose connection is ready
-                const { MongoStore } = require('connect-mongo');
-                this._mongoStore = MongoStore.create({
-                    client: mongoose.connection.getClient(),
-                    collectionName: 'sessions',
-                    ttl: 14 * 24 * 60 * 60
-                });
-                this._mongoStore.on('error', (err) => {
-                    console.error('MongoStore session error:', err.message);
-                });
-                console.log('Session store switched to MongoStore (cloud database).');
-            }
-            return this._mongoStore;
-        }
-        return this.memoryStore;
-    }
-
-    get(sid, cb) { this._getActive().get(sid, cb); }
-    set(sid, sess, cb) { this._getActive().set(sid, sess, cb); }
-    destroy(sid, cb) { this._getActive().destroy(sid, cb); }
-    touch(sid, sess, cb) {
-        const store = this._getActive();
-        if (store.touch) store.touch(sid, sess, cb);
-        else cb();
-    }
-}
-
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: true,
+    credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Session Configuration with DynamicStore
-const sessionOptions = {
-    secret: process.env.SESSION_SECRET || 'wow-moments-secret-key-12345',
-    resave: false,
-    saveUninitialized: false,
-    store: new DynamicStore(),
-    cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days
-    }
-};
-
-app.use(session(sessionOptions));
+app.use(cookieParser());
 
 // Serve static directories/files
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
@@ -100,7 +56,7 @@ app.use('/admin.css', express.static(path.join(__dirname, 'admin.css')));
 app.use('/script.js', express.static(path.join(__dirname, 'script.js')));
 app.use('/style.css', express.static(path.join(__dirname, 'style.css')));
 
-// Root route redirects to code.html
+// Root route
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'code.html'));
 });
@@ -151,41 +107,75 @@ function writeTemplates(templates) {
     }
 }
 
-// Authentication Middleware
+// JWT Authentication Middleware
+// Works statelessly — no session store needed, no cross-container issues on Vercel
 function requireAuth(req, res, next) {
-    if (req.session.isAdmin) {
+    // Support token from cookie OR Authorization header (Bearer token)
+    let token = req.cookies && req.cookies.admin_token;
+    if (!token && req.headers.authorization) {
+        const parts = req.headers.authorization.split(' ');
+        if (parts.length === 2 && parts[0] === 'Bearer') {
+            token = parts[1];
+        }
+    }
+
+    if (!token) {
+        return res.status(401).json({ error: 'Unauthorized. Admin login required.' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        if (!decoded.isAdmin) {
+            return res.status(401).json({ error: 'Unauthorized. Admin login required.' });
+        }
+        req.admin = decoded;
         next();
-    } else {
-        res.status(401).json({ error: 'Unauthorized. Admin login required.' });
+    } catch (err) {
+        return res.status(401).json({ error: 'Unauthorized. Session expired or invalid. Please log in again.' });
     }
 }
 
 // API Routes
 
-// Admin Login
+// Admin Login — issues a JWT cookie
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     if (username === 'admin' && password === 'Kolkode@123') {
-        req.session.isAdmin = true;
+        const token = jwt.sign({ isAdmin: true, username: 'admin' }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+        res.cookie('admin_token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days
+        });
         res.json({ success: true, message: 'Logged in successfully' });
     } else {
         res.status(400).json({ success: false, error: 'Invalid username or password' });
     }
 });
 
-// Admin Logout
+// Admin Logout — clears the JWT cookie
 app.post('/api/logout', (req, res) => {
-    req.session.destroy((err) => {
-        if (err) {
-            return res.status(500).json({ error: 'Could not log out' });
-        }
-        res.json({ success: true, message: 'Logged out successfully' });
+    res.clearCookie('admin_token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     });
+    res.json({ success: true, message: 'Logged out successfully' });
 });
 
-// Check Auth Status
+// Check Auth Status — verifies JWT from cookie
 app.get('/api/check-auth', (req, res) => {
-    res.json({ isAdmin: !!req.session.isAdmin });
+    let token = req.cookies && req.cookies.admin_token;
+    if (!token) {
+        return res.json({ isAdmin: false });
+    }
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        res.json({ isAdmin: !!decoded.isAdmin });
+    } catch (err) {
+        res.json({ isAdmin: false });
+    }
 });
 
 // Get all templates
@@ -286,7 +276,7 @@ app.put('/api/templates/:id', requireAuth, upload.single('imageFile'), async (re
 
         let imagePath = existingTemplate.image;
         if (req.file) {
-            // Delete old uploaded image if it exists and is not a default asset
+            // Delete old uploaded image if it's not a default asset
             if (existingTemplate.image && existingTemplate.image.startsWith('assets/') &&
                 !existingTemplate.id.startsWith('t1') &&
                 !existingTemplate.id.startsWith('t2') &&
