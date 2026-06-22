@@ -19,7 +19,7 @@ function useMongo() {
 
 if (process.env.MONGODB_URI) {
     console.log('Connecting to cloud MongoDB database...');
-    mongoose.connect(process.env.MONGODB_URI)
+    mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 2000 })
         .then(() => {
             console.log('Successfully connected to Cloud MongoDB!');
         })
@@ -52,7 +52,10 @@ if (process.env.MONGODB_URI) {
         mongoUrl: process.env.MONGODB_URI,
         collectionName: 'sessions',
         ttl: 14 * 24 * 60 * 60,
-        autoRemove: 'native'
+        autoRemove: 'native',
+        mongoOptions: {
+            serverSelectionTimeoutMS: 2000
+        }
     });
     
     // Prevent unhandled errors from crashing the server if the database is unreachable
