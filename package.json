@@ -1,0 +1,20 @@
+{
+  "name": "wow-moments-cms",
+  "version": "1.0.0",
+  "description": "CMS and Admin Portal for Wow Moments by KolKode",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "db:migrate": "node scripts/migrate.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "mongodb": "^7.3.0",
+    "mongoose": "^9.7.1",
+    "multer": "^1.4.5-lts.1"
+  }
+}

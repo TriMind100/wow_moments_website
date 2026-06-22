@@ -1,0 +1,112 @@
+[
+  {
+    "id": "t1",
+    "name": "A Love That Defies Time",
+    "price": "₹349",
+    "tag": "Trending",
+    "tagColor": "bg-amber-500",
+    "description": "Cinematic, interactive romantic story with dynamic particles, floating hearts, love timer, timeline, photo gallery, and a secret card reveal.",
+    "image": "assets/love_story_preview.png",
+    "preview": "https://wowmoments1.kolkode.in/",
+    "categories": [
+      "love",
+      "anniversary"
+    ]
+  },
+  {
+    "id": "t2",
+    "name": "Vintage Scrapbook",
+    "price": "₹549",
+    "tag": "New",
+    "tagColor": "bg-secondary",
+    "description": "A nostalgic journey through photos with animated transitions, music, and custom messages.",
+    "image": "assets/love_story2_preview.png",
+    "preview": "https://wowmoments2.kolkode.in/",
+    "categories": [
+      "love",
+      "anniversary"
+    ]
+  },
+  {
+    "id": "t6",
+    "name": "Secret Passcode Birthday",
+    "price": "₹279",
+    "tag": "Interactive",
+    "tagColor": "bg-[#ff4d8d]",
+    "description": "A passcode-locked birthday surprise. Features an interactive cake with candles to blow out, a live age counter, and a beautiful handwritten letter.",
+    "image": "assets/love_story5_preview.png",
+    "preview": "https://wowmoments5.kolkode.in/",
+    "categories": [
+      "love",
+      "birthday"
+    ]
+  },
+  {
+    "id": "t7",
+    "name": "For Baba — Father's Day",
+    "price": "₹149",
+    "tag": "Special",
+    "tagColor": "bg-secondary",
+    "description": "A warm, nostalgic Father's Day page. Features a beautiful hand-drawn background, video memory, custom polaroid grid, and an interactive envelope letter reveal.",
+    "image": "assets/fathers_day_preview.png",
+    "preview": "https://fathersdaycard.kolkode.in/",
+    "categories": [
+      "love"
+    ]
+  },
+  {
+    "id": "t3",
+    "name": "Apology Gift",
+    "price": "₹149",
+    "tag": null,
+    "tagColor": "",
+    "description": "A touching, interactive website designed to express your heartfelt apologies and sweeten the healing.",
+    "image": "assets/apology_gift_preview.png",
+    "preview": "https://apologygift.kolkode.in/",
+    "categories": [
+      "love"
+    ]
+  },
+  {
+    "id": "t4",
+    "name": "A Surprise For You",
+    "price": "₹99",
+    "tag": "Cute",
+    "tagColor": "bg-[#ff4d8d]",
+    "description": "A sweet, playful interactive surprise card filled with custom animations and personalized notes.",
+    "image": "assets/love_story4_preview.png",
+    "preview": "https://wowmoments4.kolkode.in/",
+    "categories": [
+      "love",
+      "birthday"
+    ]
+  },
+  {
+    "id": "t5",
+    "name": "A Love Letter",
+    "price": "₹99",
+    "tag": "Minimal",
+    "tagColor": "bg-secondary",
+    "description": "A beautifully styled, elegant digital stationery envelope and interactive love letter.",
+    "image": "assets/love_story3_preview.png",
+    "preview": "https://wowmoments3.kolkode.in/",
+    "categories": [
+      "love",
+      "proposal"
+    ]
+  },
+  {
+    "id": "t8",
+    "name": "Happy Anniversary Card",
+    "price": "₹129",
+    "tag": "New",
+    "tagColor": "bg-primary",
+    "description": "A beautiful Happy Anniversary digital card featuring a personalized photo and heartfelt message.",
+    "image": "assets/anniversary.png",
+    "preview": "https://wowmoments6.kolkode.in/",
+    "categories": [
+      "love",
+      "anniversary"
+    ]
+  }
+]
