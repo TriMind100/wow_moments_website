@@ -21,12 +21,19 @@ const JWT_EXPIRY = '14d';
 // On Vercel, each function invocation is stateless but the module may be reused.
 // We cache the connection promise so we only connect once per warm container.
 let _dbConnectionPromise = null;
+let lastMongoError = null;
 
 async function connectDB() {
-    if (!process.env.MONGODB_URI) return false;
+    if (!process.env.MONGODB_URI) {
+        lastMongoError = 'MONGODB_URI environment variable is missing.';
+        return false;
+    }
 
     // If already connected, return immediately
-    if (mongoose.connection.readyState === 1) return true;
+    if (mongoose.connection.readyState === 1) {
+        lastMongoError = null;
+        return true;
+    }
 
     // If a connection attempt is already in progress, wait for it
     if (!_dbConnectionPromise) {
@@ -37,9 +44,11 @@ async function connectDB() {
             retryWrites: true
         }).then(() => {
             console.log('MongoDB connected successfully.');
+            lastMongoError = null;
             return true;
         }).catch(err => {
             console.error('MongoDB connection failed:', err.message);
+            lastMongoError = err.message;
             _dbConnectionPromise = null; // allow retry on next request
             return false;
         });
@@ -51,6 +60,7 @@ async function connectDB() {
 // Handle mongoose connection errors
 mongoose.connection.on('error', (err) => {
     console.error('Mongoose runtime error:', err.message);
+    lastMongoError = err.message;
     _dbConnectionPromise = null; // reset so next request retries
 });
 
@@ -91,11 +101,21 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // ─── File-based Fallback (Local Dev Only) ─────────────────────────────────────
-const DATA_FILE = path.join(__dirname, 'data', 'templates.json');
+// Resolve DATA_FILE using process.cwd() first (correct on Vercel) then fall back to __dirname
+const DATA_FILE = fs.existsSync(path.join(process.cwd(), 'data', 'templates.json'))
+    ? path.join(process.cwd(), 'data', 'templates.json')
+    : path.join(__dirname, 'data', 'templates.json');
 
 function readTemplates() {
     try {
-        if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, JSON.stringify([]));
+        if (!fs.existsSync(DATA_FILE)) {
+            if (!process.env.VERCEL) {
+                fs.writeFileSync(DATA_FILE, JSON.stringify([]));
+            } else {
+                console.warn('Fallback template file not found on Vercel. Returning empty array.');
+                return [];
+            }
+        }
         return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
     } catch (err) {
         console.error('Error reading templates file:', err);
@@ -172,9 +192,14 @@ app.get('/api/status', async (req, res) => {
     res.json({
         mongoConnected: connected && mongoose.connection.readyState === 1,
         mongoReadyState: mongoose.connection.readyState,
+        mongoError: lastMongoError,
         isVercel: !!process.env.VERCEL,
         nodeEnv: process.env.NODE_ENV || 'development',
-        hasMongoDB_URI: !!process.env.MONGODB_URI
+        hasMongoDB_URI: !!process.env.MONGODB_URI,
+        dirname: __dirname,
+        cwd: process.cwd(),
+        dataFile: DATA_FILE,
+        dataFileExists: fs.existsSync(DATA_FILE)
     });
 });
 
