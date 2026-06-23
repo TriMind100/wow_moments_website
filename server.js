@@ -72,6 +72,9 @@ app.use(cookieParser());
 
 // ─── Static Files ─────────────────────────────────────────────────────────────
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
+if (process.env.VERCEL) {
+    app.use('/assets', express.static('/tmp'));
+}
 app.use('/admin.js', express.static(path.join(__dirname, 'admin.js')));
 app.use('/admin.css', express.static(path.join(__dirname, 'admin.css')));
 app.use('/script.js', express.static(path.join(__dirname, 'script.js')));
@@ -89,7 +92,7 @@ app.get('/admin.html', (req, res) => {
 // ─── Multer (Image Uploads) ───────────────────────────────────────────────────
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const dest = path.join(__dirname, 'assets');
+        const dest = process.env.VERCEL ? '/tmp' : path.join(__dirname, 'assets');
         if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
         cb(null, dest);
     },
