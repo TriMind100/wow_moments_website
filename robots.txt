@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin.html
+Disallow: /admin.js
+Disallow: /admin.css
+Allow: /
+
+Sitemap: https://wowmoments.kolkode.in/sitemap.xml

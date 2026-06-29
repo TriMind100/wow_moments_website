@@ -89,6 +89,15 @@ app.get('/admin.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
+// ─── SEO Routes ───────────────────────────────────────────────────────────────
+app.get('/robots.txt', (req, res) => {
+    res.sendFile(path.join(__dirname, 'robots.txt'));
+});
+
+app.get('/sitemap.xml', (req, res) => {
+    res.sendFile(path.join(__dirname, 'sitemap.xml'));
+});
+
 // ─── Multer (Image Uploads) ───────────────────────────────────────────────────
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
