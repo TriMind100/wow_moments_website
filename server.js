@@ -99,18 +99,21 @@ app.get('/sitemap.xml', (req, res) => {
 });
 
 // ─── Multer (Image Uploads) ───────────────────────────────────────────────────
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const dest = process.env.VERCEL ? '/tmp' : path.join(__dirname, 'assets');
-        if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
-        cb(null, dest);
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-    }
+// Using memoryStorage so uploaded files are kept as Buffer in RAM.
+// We then convert them to a Base64 data URL and store directly in MongoDB.
+// This avoids Vercel's ephemeral /tmp filesystem problem (files are wiped
+// between cold starts, making stored asset/ paths point to missing files).
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 } // 5 MB max
 });
-const upload = multer({ storage });
+
+// Helper: convert an uploaded multer file (in memory) to a Base64 data URL
+function fileToDataUrl(file) {
+    const mimeType = file.mimetype || 'image/jpeg';
+    const base64 = file.buffer.toString('base64');
+    return `data:${mimeType};base64,${base64}`;
+}
 
 // ─── File-based Fallback (Local Dev Only) ─────────────────────────────────────
 // Resolve DATA_FILE using process.cwd() first (correct on Vercel) then fall back to __dirname
@@ -240,7 +243,7 @@ app.post('/api/templates', requireAuth, upload.single('imageFile'), async (req, 
 
         const id = 't' + Date.now();
         let imagePath = '';
-        if (req.file) imagePath = 'assets/' + req.file.filename;
+        if (req.file) imagePath = fileToDataUrl(req.file); // Base64 data URL stored in MongoDB
         else if (req.body.imageUrl) imagePath = req.body.imageUrl;
         else return res.status(400).json({ error: 'An image file or URL is required.' });
 
@@ -305,7 +308,7 @@ app.put('/api/templates/:id', requireAuth, upload.single('imageFile'), async (re
 
         let imagePath = existingTemplate.image;
         if (req.file) {
-            imagePath = 'assets/' + req.file.filename;
+            imagePath = fileToDataUrl(req.file); // Base64 data URL stored in MongoDB
         } else if (req.body.imageUrl) {
             imagePath = req.body.imageUrl;
         }
