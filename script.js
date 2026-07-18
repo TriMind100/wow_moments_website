@@ -126,6 +126,22 @@ void main() {
             filteredList.forEach(t => {
                 const card = document.createElement('div');
                 card.className = "template-card glass-card review-card rounded-[2rem] overflow-hidden flex flex-col p-2 group";
+                
+                let priceHtml;
+                if (t.discountPercent > 0 && t.originalPrice) {
+                    priceHtml = `
+                        <div class="flex flex-col items-end flex-shrink-0 ml-2">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs text-gray-400 line-through">${t.originalPrice}</span>
+                                <span class="text-primary font-extrabold whitespace-nowrap text-lg">${t.price}</span>
+                            </div>
+                            <span class="inline-block text-[8px] font-black uppercase tracking-wider text-white bg-primary px-1.5 py-0.5 rounded-full mt-0.5">${t.discountPercent}% OFF</span>
+                        </div>
+                    `;
+                } else {
+                    priceHtml = `<span class="text-primary font-bold whitespace-nowrap ml-2">${t.price}</span>`;
+                }
+
                 card.innerHTML = `
                     <div class="relative overflow-hidden rounded-[1.8rem]">
                         <img class="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-700" src="${t.image}" alt="${t.name}">
@@ -135,7 +151,7 @@ void main() {
                         <div>
                             <div class="flex justify-between items-start mb-2">
                                 <h3 class="font-bold text-2xl brand-font leading-tight">${t.name}</h3>
-                                <span class="text-primary font-bold whitespace-nowrap ml-2">${t.price}</span>
+                                ${priceHtml}
                             </div>
                             <p class="text-on-surface-variant text-sm mb-6">${t.description}</p>
                         </div>
