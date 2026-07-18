@@ -41,6 +41,14 @@ const templateSchema = new mongoose.Schema({
         type: [String],
         default: []
     },
+    originalPrice: {
+        type: String,
+        default: null   // null = no sale active; stores the price string before the discount was applied
+    },
+    discountPercent: {
+        type: Number,
+        default: 0      // 0 = no active discount
+    },
     createdAt: {
         type: Date,
         default: Date.now

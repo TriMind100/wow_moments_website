@@ -8,6 +8,7 @@ const fs = require('fs');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const Template = require('./models/Template');
+const Banner   = require('./models/Banner');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -143,6 +144,21 @@ function writeTemplates(templates) {
         throw new Error('Filesystem is read-only on Vercel. MongoDB Atlas is required.');
     }
     fs.writeFileSync(DATA_FILE, JSON.stringify(templates, null, 2));
+}
+
+// ─── Banner file-based fallback ───────────────────────────────────────────────
+const BANNER_FILE = path.join(path.dirname(DATA_FILE), 'banner.json');
+
+function readBannerFile() {
+    try {
+        if (!fs.existsSync(BANNER_FILE)) return null;
+        return JSON.parse(fs.readFileSync(BANNER_FILE, 'utf8'));
+    } catch { return null; }
+}
+
+function writeBannerFile(data) {
+    if (process.env.VERCEL) throw new Error('Filesystem is read-only on Vercel.');
+    fs.writeFileSync(BANNER_FILE, JSON.stringify(data, null, 2));
 }
 
 // ─── Auth Middleware ──────────────────────────────────────────────────────────
@@ -384,6 +400,216 @@ app.delete('/api/templates/:id', requireAuth, async (req, res) => {
         res.json({ success: true, message: 'Template deleted' });
     } catch (err) {
         console.error('Error deleting template:', err);
+        res.status(500).json({ error: 'Server error: ' + err.message });
+    }
+});
+
+// ─── API: Sales ───────────────────────────────────────────────────────────────
+// POST /api/sales/run  — apply a discount to one or more templates
+app.post('/api/sales/run', requireAuth, async (req, res) => {
+    try {
+        const { templateIds, discountPercent } = req.body;
+        const pct = parseFloat(discountPercent);
+
+        if (!Array.isArray(templateIds) || templateIds.length === 0) {
+            return res.status(400).json({ error: 'templateIds must be a non-empty array.' });
+        }
+        if (isNaN(pct) || pct <= 0 || pct >= 100) {
+            return res.status(400).json({ error: 'discountPercent must be between 1 and 99.' });
+        }
+
+        const mongoOk = await connectDB();
+        const useMongoNow = mongoOk && mongoose.connection.readyState === 1;
+
+        if (useMongoNow) {
+            const templates = await Template.find({ id: { $in: templateIds } });
+            const bulkOps = templates.map(t => {
+                // Only save originalPrice once (don't overwrite if already on sale)
+                const storedOriginal = t.originalPrice || t.price;
+                const originalNum = parseFloat(storedOriginal.replace(/[^\d.]/g, ''));
+                const discounted = Math.round(originalNum * (1 - pct / 100));
+                return {
+                    updateOne: {
+                        filter: { id: t.id },
+                        update: {
+                            $set: {
+                                originalPrice: storedOriginal,
+                                discountPercent: pct,
+                                price: '₹' + discounted
+                            }
+                        }
+                    }
+                };
+            });
+            await Template.bulkWrite(bulkOps);
+            const updated = await Template.find({ id: { $in: templateIds } });
+            return res.json({ success: true, updated });
+        }
+
+        if (process.env.VERCEL) {
+            return res.status(503).json({ error: 'Database not connected.' });
+        }
+
+        const templates = readTemplates();
+        const updated = [];
+        templates.forEach((t, i) => {
+            if (templateIds.includes(t.id)) {
+                const storedOriginal = t.originalPrice || t.price;
+                const originalNum = parseFloat(storedOriginal.replace(/[^\d.]/g, ''));
+                const discounted = Math.round(originalNum * (1 - pct / 100));
+                templates[i] = { ...t, originalPrice: storedOriginal, discountPercent: pct, price: '₹' + discounted };
+                updated.push(templates[i]);
+            }
+        });
+        writeTemplates(templates);
+        res.json({ success: true, updated });
+    } catch (err) {
+        console.error('Error running sale:', err);
+        res.status(500).json({ error: 'Server error: ' + err.message });
+    }
+});
+
+// DELETE /api/sales/clear  — remove discount from one or more templates (or all)
+app.delete('/api/sales/clear', requireAuth, async (req, res) => {
+    try {
+        // Body can have { templateIds: [...] } or be empty to clear all
+        const { templateIds } = req.body || {};
+
+        const mongoOk = await connectDB();
+        const useMongoNow = mongoOk && mongoose.connection.readyState === 1;
+
+        const filter = templateIds && templateIds.length > 0
+            ? { id: { $in: templateIds } }
+            : {};
+
+        if (useMongoNow) {
+            const templates = await Template.find({ ...filter, discountPercent: { $gt: 0 } });
+            const bulkOps = templates.map(t => ({
+                updateOne: {
+                    filter: { id: t.id },
+                    update: {
+                        $set: {
+                            price: t.originalPrice || t.price,
+                            originalPrice: null,
+                            discountPercent: 0
+                        }
+                    }
+                }
+            }));
+            if (bulkOps.length > 0) await Template.bulkWrite(bulkOps);
+            return res.json({ success: true, clearedCount: bulkOps.length });
+        }
+
+        if (process.env.VERCEL) {
+            return res.status(503).json({ error: 'Database not connected.' });
+        }
+
+        const templates = readTemplates();
+        let clearedCount = 0;
+        templates.forEach((t, i) => {
+            const match = !templateIds || templateIds.length === 0 || templateIds.includes(t.id);
+            if (match && t.discountPercent > 0) {
+                templates[i] = { ...t, price: t.originalPrice || t.price, originalPrice: null, discountPercent: 0 };
+                clearedCount++;
+            }
+        });
+        writeTemplates(templates);
+        res.json({ success: true, clearedCount });
+    } catch (err) {
+        console.error('Error clearing sale:', err);
+        res.status(500).json({ error: 'Server error: ' + err.message });
+    }
+});
+
+// ─── API: Banner ──────────────────────────────────────────────────────────────
+// GET /api/banner  — public; returns the active banner or { active: false }
+app.get('/api/banner', async (req, res) => {
+    try {
+        const mongoOk = await connectDB();
+        if (mongoOk && mongoose.connection.readyState === 1) {
+            const banner = await Banner.findOne({ key: 'main' });
+            if (banner && banner.active) {
+                return res.json({ active: true, image: banner.image, caption: banner.caption, ctaLink: banner.ctaLink, ctaText: banner.ctaText });
+            }
+            return res.json({ active: false });
+        }
+        // File fallback
+        const b = readBannerFile();
+        if (b && b.active) return res.json(b);
+        return res.json({ active: false });
+    } catch (err) {
+        console.error('Error getting banner:', err);
+        res.status(500).json({ error: 'Server error: ' + err.message });
+    }
+});
+
+// POST /api/banner  — admin; upsert banner (activate / update)
+app.post('/api/banner', requireAuth, upload.single('bannerImage'), async (req, res) => {
+    try {
+        const { caption, ctaLink, ctaText, imageUrl } = req.body;
+
+        let imageData = imageUrl || null;
+        if (req.file) imageData = fileToDataUrl(req.file);
+
+        if (!imageData) {
+            return res.status(400).json({ error: 'A banner image file or URL is required.' });
+        }
+
+        const bannerData = {
+            active: true,
+            image: imageData,
+            caption: caption || null,
+            ctaLink: ctaLink || '#templates',
+            ctaText: ctaText || 'Shop Sale',
+            updatedAt: new Date()
+        };
+
+        const mongoOk = await connectDB();
+        if (mongoOk && mongoose.connection.readyState === 1) {
+            const banner = await Banner.findOneAndUpdate(
+                { key: 'main' },
+                { $set: bannerData },
+                { upsert: true, new: true }
+            );
+            return res.json({ success: true, banner });
+        }
+
+        if (process.env.VERCEL) {
+            return res.status(503).json({ error: 'Database not connected.' });
+        }
+
+        const existing = readBannerFile() || { key: 'main' };
+        const updated = { ...existing, ...bannerData };
+        writeBannerFile(updated);
+        res.json({ success: true, banner: updated });
+    } catch (err) {
+        console.error('Error saving banner:', err);
+        res.status(500).json({ error: 'Server error: ' + err.message });
+    }
+});
+
+// DELETE /api/banner  — admin; deactivate banner (keeps image, just hides popup)
+app.delete('/api/banner', requireAuth, async (req, res) => {
+    try {
+        const mongoOk = await connectDB();
+        if (mongoOk && mongoose.connection.readyState === 1) {
+            await Banner.findOneAndUpdate(
+                { key: 'main' },
+                { $set: { active: false, updatedAt: new Date() } },
+                { upsert: true }
+            );
+            return res.json({ success: true });
+        }
+
+        if (process.env.VERCEL) {
+            return res.status(503).json({ error: 'Database not connected.' });
+        }
+
+        const existing = readBannerFile() || { key: 'main' };
+        writeBannerFile({ ...existing, active: false, updatedAt: new Date() });
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error deactivating banner:', err);
         res.status(500).json({ error: 'Server error: ' + err.message });
     }
 });

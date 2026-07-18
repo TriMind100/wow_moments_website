@@ -112,11 +112,24 @@ document.addEventListener('DOMContentLoaded', () => {
         templates.forEach(t => {
             const card = document.createElement('div');
             card.className = 'bg-white border border-gray-100 rounded-2xl overflow-hidden p-3 flex gap-4 items-center shadow-sm relative group';
+
+            // Price display: show original & discounted if on sale
+            let priceHtml;
+            if (t.discountPercent > 0 && t.originalPrice) {
+                priceHtml = `
+                    <span class="price-strike text-xs">${t.originalPrice}</span>
+                    <span class="text-sm font-extrabold text-primary ml-1">${t.price}</span>
+                    <span class="on-sale-badge inline-block ml-1 text-[9px] font-black uppercase tracking-wider text-white bg-primary px-1.5 py-0.5 rounded-full">${t.discountPercent}% OFF</span>
+                `;
+            } else {
+                priceHtml = `<span class="text-sm font-semibold text-primary">${t.price}</span>`;
+            }
+
             card.innerHTML = `
                 <img src="${t.image}" alt="${t.name}" class="w-20 h-20 object-cover rounded-xl bg-gray-50 flex-shrink-0">
                 <div class="flex-grow min-w-0 pr-16">
                     <h3 class="font-bold text-base truncate">${t.name}</h3>
-                    <p class="text-sm font-semibold text-primary mt-0.5">${t.price}</p>
+                    <div class="flex items-center flex-wrap gap-1 mt-0.5">${priceHtml}</div>
                     <p class="text-xs text-gray-400 mt-1 truncate">${t.description}</p>
                     ${t.tag ? `<span class="inline-block mt-2 text-[9px] font-bold uppercase tracking-wider text-white px-2 py-0.5 rounded-full ${t.tagColor || 'bg-primary'}">${t.tag}</span>` : ''}
                 </div>
@@ -152,6 +165,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
+
+        // Refresh sale panel template list whenever templates reload
+        renderSaleTemplateList(templates);
     }
 
     function startEdit(template) {
@@ -167,8 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Populate fields
         templateForm.name.value = template.name;
-        const priceNum = template.price.replace(/[^\d]/g, '');
-        templateForm.price.value = priceNum || template.price;
+        // Use original price if on sale so the field shows the real base price
+        const basePriceStr = template.originalPrice || template.price;
+        const priceNum = basePriceStr.replace(/[^\d]/g, '');
+        templateForm.price.value = priceNum || basePriceStr;
         templateForm.tag.value = template.tag || '';
         templateForm.tagColor.value = template.tagColor || 'bg-primary';
         templateForm.description.value = template.description;
@@ -281,6 +299,442 @@ document.addEventListener('DOMContentLoaded', () => {
             formError.textContent = 'Server error. Failed to submit template.';
             formError.classList.remove('hidden');
         }
+    });
+
+    // ─────────────────────────────────────────────────────────────────────
+    //  SALE MANAGEMENT
+    // ─────────────────────────────────────────────────────────────────────
+    let saleTemplatesCache = [];   // latest list of templates
+    let saleSelectedIds = new Set();
+    let saleDiscountPct = 0;
+
+    const saleTemplatesList   = document.getElementById('sale-templates-list');
+    const discountPresets     = document.getElementById('discount-presets');
+    const saleDiscountCustom  = document.getElementById('sale-discount-custom');
+    const salePricePreview    = document.getElementById('sale-price-preview');
+    const saleStatus          = document.getElementById('sale-status');
+    const saleApplyBtn        = document.getElementById('sale-apply-btn');
+    const saleClearAllBtn     = document.getElementById('sale-clear-all-btn');
+    const saleSelectAllBtn    = document.getElementById('sale-select-all-btn');
+    const saleDeselectAllBtn  = document.getElementById('sale-deselect-all-btn');
+
+    /** Render the template checkboxes in the sale panel */
+    function renderSaleTemplateList(templates) {
+        saleTemplatesCache = templates;
+        saleTemplatesList.innerHTML = '';
+
+        if (!templates.length) {
+            saleTemplatesList.innerHTML = '<p class="text-xs text-gray-400 text-center py-6">No templates found.</p>';
+            return;
+        }
+
+        templates.forEach(t => {
+            const onSale = t.discountPercent > 0 && t.originalPrice;
+            const isSelected = saleSelectedIds.has(t.id);
+
+            const item = document.createElement('label');
+            item.className = `sale-template-item flex items-center gap-3 p-2.5 rounded-xl cursor-pointer ${isSelected ? 'selected' : ''}`;
+            item.setAttribute('for', `sale-chk-${t.id}`);
+
+            // Price display
+            const priceDisplay = onSale
+                ? `<span class="price-strike text-[10px]">${t.originalPrice}</span><span class="text-[10px] font-extrabold text-primary ml-1">${t.price}</span><span class="ml-1 text-[8px] font-black text-white bg-primary px-1 py-0.5 rounded-full">${t.discountPercent}% OFF</span>`
+                : `<span class="text-[10px] font-semibold text-gray-600">${t.price}</span>`;
+
+            item.innerHTML = `
+                <input type="checkbox" id="sale-chk-${t.id}" class="rounded border-gray-300 text-primary focus:ring-primary"
+                    ${isSelected ? 'checked' : ''}>
+                <img src="${t.image}" alt="${t.name}" class="w-9 h-9 rounded-lg object-cover flex-shrink-0 bg-gray-100">
+                <div class="flex-grow min-w-0">
+                    <p class="text-xs font-bold truncate">${t.name}</p>
+                    <div class="flex items-center gap-1 flex-wrap mt-0.5">${priceDisplay}</div>
+                </div>
+            `;
+
+            // Toggle selection
+            item.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    saleSelectedIds.add(t.id);
+                    item.classList.add('selected');
+                } else {
+                    saleSelectedIds.delete(t.id);
+                    item.classList.remove('selected');
+                }
+                updateSalePricePreview();
+            });
+
+            saleTemplatesList.appendChild(item);
+        });
+
+        updateSalePricePreview();
+        // Sync banner panel visibility after template list is (re)rendered
+        if (typeof syncBannerPanelVisibility === 'function') {
+            syncBannerPanelVisibility(templates);
+        }
+    }
+
+    /** Refresh the live price preview panel */
+    function updateSalePricePreview() {
+        const selected = saleTemplatesCache.filter(t => saleSelectedIds.has(t.id));
+
+        if (!selected.length || !saleDiscountPct) {
+            salePricePreview.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">Select templates &amp; discount to preview prices.</p>';
+            return;
+        }
+
+        salePricePreview.innerHTML = selected.map(t => {
+            const basePriceStr = t.originalPrice || t.price;
+            const baseNum = parseFloat(basePriceStr.replace(/[^\d.]/g, ''));
+            const discounted = Math.round(baseNum * (1 - saleDiscountPct / 100));
+            return `
+                <div class="flex items-center justify-between text-xs py-1 border-b border-gray-100 last:border-0">
+                    <span class="font-semibold text-gray-700 truncate mr-2">${t.name}</span>
+                    <span class="flex items-center gap-1.5 flex-shrink-0">
+                        <span class="price-strike">${basePriceStr}</span>
+                        <span class="font-extrabold text-primary">₹${discounted}</span>
+                        <span class="text-[9px] font-black text-white bg-primary px-1.5 py-0.5 rounded-full">${saleDiscountPct}% OFF</span>
+                    </span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    /** Set active discount and deactivate others */
+    function setDiscount(pct) {
+        saleDiscountPct = pct;
+        // Highlight active preset
+        document.querySelectorAll('.discount-preset-btn').forEach(btn => {
+            btn.classList.toggle('active', parseFloat(btn.dataset.pct) === pct);
+        });
+        updateSalePricePreview();
+    }
+
+    // Preset buttons
+    discountPresets.addEventListener('click', (e) => {
+        const btn = e.target.closest('.discount-preset-btn');
+        if (!btn) return;
+        const pct = parseFloat(btn.dataset.pct);
+        saleDiscountCustom.value = '';
+        setDiscount(pct);
+    });
+
+    // Custom input
+    saleDiscountCustom.addEventListener('input', () => {
+        const val = parseFloat(saleDiscountCustom.value);
+        if (val > 0 && val < 100) {
+            // Deactivate all presets
+            document.querySelectorAll('.discount-preset-btn').forEach(b => b.classList.remove('active'));
+            saleDiscountPct = val;
+            updateSalePricePreview();
+        }
+    });
+
+    // Select / Deselect all
+    saleSelectAllBtn.addEventListener('click', () => {
+        saleTemplatesCache.forEach(t => saleSelectedIds.add(t.id));
+        renderSaleTemplateList(saleTemplatesCache);
+    });
+
+    saleDeselectAllBtn.addEventListener('click', () => {
+        saleSelectedIds.clear();
+        renderSaleTemplateList(saleTemplatesCache);
+    });
+
+    /** Show status message in sale panel */
+    function showSaleStatus(msg, isError = false) {
+        saleStatus.textContent = msg;
+        saleStatus.className = `text-sm font-semibold mt-1 ${isError ? 'text-red-600' : 'text-green-600'}`;
+        saleStatus.classList.remove('hidden');
+        setTimeout(() => saleStatus.classList.add('hidden'), 4000);
+    }
+
+    // Apply Sale button
+    saleApplyBtn.addEventListener('click', async () => {
+        if (!saleSelectedIds.size) {
+            showSaleStatus('Please select at least one template.', true);
+            return;
+        }
+        if (!saleDiscountPct || saleDiscountPct <= 0 || saleDiscountPct >= 100) {
+            showSaleStatus('Please choose a valid discount (1–99%).', true);
+            return;
+        }
+
+        saleApplyBtn.disabled = true;
+        saleApplyBtn.textContent = 'Applying…';
+
+        try {
+            const res = await fetch('/api/sales/run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    templateIds: [...saleSelectedIds],
+                    discountPercent: saleDiscountPct
+                })
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                showSaleStatus(`Sale applied to ${data.updated.length} template(s)! 🎉`);
+                loadTemplates(); // refreshes grid + sale panel
+            } else {
+                showSaleStatus(data.error || 'Failed to apply sale.', true);
+            }
+        } catch (err) {
+            showSaleStatus('Server error. Please try again.', true);
+        } finally {
+            saleApplyBtn.disabled = false;
+            saleApplyBtn.innerHTML = '<span class="material-symbols-outlined text-lg">bolt</span> Apply Sale';
+        }
+    });
+
+    // Clear All Sales button
+    saleClearAllBtn.addEventListener('click', async () => {
+        if (!confirm('Clear ALL active sales and restore original prices?')) return;
+
+        saleClearAllBtn.disabled = true;
+        saleClearAllBtn.textContent = 'Clearing…';
+
+        try {
+            const res = await fetch('/api/sales/clear', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                showSaleStatus(`Cleared ${data.clearedCount} sale(s). Prices restored.`);
+                saleSelectedIds.clear();
+                loadTemplates();
+                // Auto-deactivate banner when sale is cleared
+                await deactivateBanner(true /* silent */);
+            } else {
+                showSaleStatus(data.error || 'Failed to clear sales.', true);
+            }
+        } catch (err) {
+            showSaleStatus('Server error. Please try again.', true);
+        } finally {
+            saleClearAllBtn.disabled = false;
+            saleClearAllBtn.innerHTML = '<span class="material-symbols-outlined text-base">remove_shopping_cart</span> Clear All Sales';
+        }
+    });
+
+    // ─────────────────────────────────────────────────────────────────────
+    //  SALE BANNER MANAGEMENT
+    // ─────────────────────────────────────────────────────────────────────
+    const bannerPanel        = document.getElementById('banner-panel');
+    const bannerDropzone     = document.getElementById('banner-dropzone');
+    const bannerImageFile    = document.getElementById('banner-image-file');
+    const bannerImageUrl     = document.getElementById('banner-image-url');
+    const bannerCaptionInput = document.getElementById('banner-caption');
+    const bannerCtaText      = document.getElementById('banner-cta-text');
+    const bannerCtaLink      = document.getElementById('banner-cta-link');
+    const bannerSaveBtn      = document.getElementById('banner-save-btn');
+    const bannerRemoveBtn    = document.getElementById('banner-remove-btn');
+    const bannerLiveBadge    = document.getElementById('banner-live-badge');
+    const bannerStatusEl     = document.getElementById('banner-status');
+
+    // Preview elements
+    const bannerPreviewImg         = document.getElementById('banner-preview-img');
+    const bannerPreviewPlaceholder = document.getElementById('banner-preview-placeholder');
+    const bannerPreviewCaption     = document.getElementById('banner-preview-caption');
+    const bannerPreviewCta         = document.getElementById('banner-preview-cta');
+
+    // Tracks whether banner panel should be shown (based on active sales)
+    let bannerPanelVisible = false;
+
+    /** Show/hide banner panel based on whether any template is on sale */
+    function syncBannerPanelVisibility(templates) {
+        const hasActiveSale = templates.some(t => t.discountPercent > 0);
+        if (hasActiveSale && !bannerPanelVisible) {
+            bannerPanel.classList.remove('hidden');
+            bannerPanelVisible = true;
+            loadBannerState(); // refresh badge / form on first show
+        } else if (!hasActiveSale && bannerPanelVisible) {
+            bannerPanel.classList.add('hidden');
+            bannerPanelVisible = false;
+        }
+    }
+
+    /** Set banner preview image from data URL or external URL */
+    function setBannerPreviewImage(src) {
+        if (src) {
+            bannerPreviewImg.src = src;
+            bannerPreviewImg.classList.remove('hidden');
+            bannerPreviewPlaceholder.classList.add('hidden');
+        } else {
+            bannerPreviewImg.src = '';
+            bannerPreviewImg.classList.add('hidden');
+            bannerPreviewPlaceholder.classList.remove('hidden');
+        }
+    }
+
+    /** Update live preview caption and CTA */
+    function updateBannerPreviewMeta() {
+        const cap = bannerCaptionInput.value.trim();
+        if (cap) {
+            bannerPreviewCaption.textContent = cap;
+            bannerPreviewCaption.classList.remove('hidden');
+        } else {
+            bannerPreviewCaption.classList.add('hidden');
+        }
+        bannerPreviewCta.textContent = bannerCtaText.value.trim() || 'Shop Sale';
+    }
+
+    /** Load existing banner from API and populate the form / badge */
+    async function loadBannerState() {
+        try {
+            const res = await fetch('/api/banner');
+            const data = await res.json();
+            if (data.active) {
+                setBannerPreviewImage(data.image);
+                bannerCaptionInput.value = data.caption || '';
+                bannerCtaText.value    = data.ctaText  || 'Shop Sale';
+                bannerCtaLink.value    = data.ctaLink  || '#templates';
+                updateBannerPreviewMeta();
+                // Show live badge + remove button
+                bannerLiveBadge.classList.remove('hidden');
+                bannerLiveBadge.classList.add('flex');
+                bannerRemoveBtn.classList.remove('hidden');
+                bannerRemoveBtn.classList.add('flex');
+            } else {
+                bannerLiveBadge.classList.add('hidden');
+                bannerLiveBadge.classList.remove('flex');
+                bannerRemoveBtn.classList.add('hidden');
+                bannerRemoveBtn.classList.remove('flex');
+            }
+        } catch (err) {
+            console.error('Error loading banner state:', err);
+        }
+    }
+
+    /** Show status in banner panel */
+    function showBannerStatus(msg, isError = false) {
+        bannerStatusEl.textContent = msg;
+        bannerStatusEl.className = `text-sm font-semibold mt-1 ${isError ? 'text-red-600' : 'text-green-600'}`;
+        bannerStatusEl.classList.remove('hidden');
+        setTimeout(() => bannerStatusEl.classList.add('hidden'), 4000);
+    }
+
+    /** Deactivate banner via API */
+    async function deactivateBanner(silent = false) {
+        try {
+            const res = await fetch('/api/banner', { method: 'DELETE' });
+            if (res.ok) {
+                bannerLiveBadge.classList.add('hidden');
+                bannerLiveBadge.classList.remove('flex');
+                bannerRemoveBtn.classList.add('hidden');
+                bannerRemoveBtn.classList.remove('flex');
+                setBannerPreviewImage(null);
+                if (!silent) showBannerStatus('Banner removed. Popup is now hidden on the site.');
+            } else {
+                if (!silent) showBannerStatus('Failed to remove banner.', true);
+            }
+        } catch (err) {
+            if (!silent) showBannerStatus('Server error. Please try again.', true);
+        }
+    }
+
+    // ── Dropzone: click to choose file ────────────────────────────────────
+    bannerDropzone.addEventListener('click', () => bannerImageFile.click());
+
+    // ── Drag and drop ─────────────────────────────────────────────────────
+    bannerDropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        bannerDropzone.classList.add('drag-over');
+    });
+    bannerDropzone.addEventListener('dragleave', () => {
+        bannerDropzone.classList.remove('drag-over');
+    });
+    bannerDropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        bannerDropzone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            bannerImageFile.files = e.dataTransfer.files;
+            handleBannerFileSelected(file);
+        }
+    });
+
+    // ── File input change ─────────────────────────────────────────────────
+    bannerImageFile.addEventListener('change', () => {
+        const file = bannerImageFile.files[0];
+        if (file) handleBannerFileSelected(file);
+    });
+
+    function handleBannerFileSelected(file) {
+        bannerImageUrl.value = ''; // clear URL if file chosen
+        const reader = new FileReader();
+        reader.onload = (e) => setBannerPreviewImage(e.target.result);
+        reader.readAsDataURL(file);
+        // Update dropzone label
+        bannerDropzone.querySelector('p').textContent = `✓ ${file.name}`;
+    }
+
+    // ── URL input ─────────────────────────────────────────────────────────
+    bannerImageUrl.addEventListener('input', () => {
+        const url = bannerImageUrl.value.trim();
+        if (url) {
+            // Clear file input
+            bannerImageFile.value = '';
+            bannerDropzone.querySelector('p').textContent = 'Drag & drop or click to choose';
+            setBannerPreviewImage(url);
+        } else {
+            setBannerPreviewImage(null);
+        }
+    });
+
+    // ── Caption / CTA live preview ────────────────────────────────────────
+    bannerCaptionInput.addEventListener('input', updateBannerPreviewMeta);
+    bannerCtaText.addEventListener('input',      updateBannerPreviewMeta);
+
+    // ── Save / Activate Banner ────────────────────────────────────────────
+    bannerSaveBtn.addEventListener('click', async () => {
+        const file  = bannerImageFile.files[0];
+        const url   = bannerImageUrl.value.trim();
+
+        if (!file && !url) {
+            showBannerStatus('Please upload an image or enter an image URL.', true);
+            return;
+        }
+
+        bannerSaveBtn.disabled = true;
+        bannerSaveBtn.innerHTML = '<span class="material-symbols-outlined text-lg">hourglass_top</span> Saving…';
+
+        try {
+            const formData = new FormData();
+            if (file) formData.append('bannerImage', file);
+            else       formData.append('imageUrl', url);
+            formData.append('caption', bannerCaptionInput.value.trim());
+            formData.append('ctaText', bannerCtaText.value.trim() || 'Shop Sale');
+            formData.append('ctaLink', bannerCtaLink.value.trim() || '#templates');
+
+            const res  = await fetch('/api/banner', { method: 'POST', body: formData });
+            const data = await res.json();
+
+            if (res.ok) {
+                showBannerStatus('🎉 Banner saved and live on the website!');
+                bannerLiveBadge.classList.remove('hidden');
+                bannerLiveBadge.classList.add('flex');
+                bannerRemoveBtn.classList.remove('hidden');
+                bannerRemoveBtn.classList.add('flex');
+            } else {
+                showBannerStatus(data.error || 'Failed to save banner.', true);
+            }
+        } catch (err) {
+            showBannerStatus('Server error. Please try again.', true);
+        } finally {
+            bannerSaveBtn.disabled = false;
+            bannerSaveBtn.innerHTML = '<span class="material-symbols-outlined text-lg">upload</span> Save & Activate Banner';
+        }
+    });
+
+    // ── Remove Banner ─────────────────────────────────────────────────────
+    bannerRemoveBtn.addEventListener('click', async () => {
+        if (!confirm('Remove the sale banner? Visitors will no longer see the popup.')) return;
+        bannerRemoveBtn.disabled = true;
+        await deactivateBanner(false);
+        bannerRemoveBtn.disabled = false;
     });
 
     // Run auth check on load

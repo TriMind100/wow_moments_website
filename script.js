@@ -295,4 +295,75 @@ void main() {
             link.addEventListener('click', closeMobileMenu);
         });
     }
+
+    // ----------------------------------------------------------------
+    // 6. Sale Banner Popup
+    // ----------------------------------------------------------------
+    (async function initSaleBannerPopup() {
+        const overlay    = document.getElementById('sale-popup-overlay');
+        const closeBtn   = document.getElementById('sale-popup-close');
+        const popupImg   = document.getElementById('sale-popup-img');
+        const popupCap   = document.getElementById('sale-popup-caption');
+        const popupCta   = document.getElementById('sale-popup-cta');
+
+        if (!overlay || !closeBtn) return; // safety guard
+
+        // Only show once per browser session
+        if (sessionStorage.getItem('salePopupDismissed')) return;
+
+        try {
+            const res  = await fetch('/api/banner');
+            const data = await res.json();
+
+            if (!data.active || !data.image) return; // no active banner
+
+            // Populate popup content
+            popupImg.src = data.image;
+            popupImg.style.display = 'block';
+
+            if (data.caption) {
+                popupCap.textContent = data.caption;
+                popupCap.style.display = 'block';
+            } else {
+                popupCap.style.display = 'none';
+            }
+
+            popupCta.textContent = data.ctaText || 'Shop Sale';
+            popupCta.href        = data.ctaLink  || '#templates';
+
+            // Show the popup with a short delay so the page can settle first
+            setTimeout(() => {
+                overlay.classList.add('visible');
+                document.body.style.overflow = 'hidden'; // prevent scroll behind popup
+            }, 700);
+
+            // Close popup helper
+            function closePopup() {
+                overlay.classList.remove('visible');
+                document.body.style.overflow = '';
+                sessionStorage.setItem('salePopupDismissed', '1');
+            }
+
+            // Close button
+            closeBtn.addEventListener('click', closePopup);
+
+            // Click on dark backdrop (not on the card) also closes
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) closePopup();
+            });
+
+            // CTA click closes popup then navigates
+            popupCta.addEventListener('click', () => {
+                closePopup();
+            });
+
+            // Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closePopup();
+            });
+
+        } catch (err) {
+            console.warn('Could not load sale banner:', err);
+        }
+    })();
 });

@@ -39,6 +39,65 @@
         .btn-gradient {
             background: linear-gradient(135deg, #b90a5a 0%, #ff4d8d 100%);
         }
+        /* Sale Section */
+        .sale-section {
+            background: linear-gradient(135deg, rgba(185,10,90,0.06) 0%, rgba(255,77,141,0.08) 100%);
+            border: 1px solid rgba(185,10,90,0.18);
+        }
+        .discount-preset-btn {
+            transition: all 0.18s ease;
+        }
+        .discount-preset-btn.active {
+            background: linear-gradient(135deg, #b90a5a 0%, #ff4d8d 100%);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 4px 14px rgba(185,10,90,0.35);
+        }
+        .sale-template-item {
+            transition: background 0.15s, box-shadow 0.15s;
+        }
+        .sale-template-item:hover {
+            background: rgba(185,10,90,0.04);
+        }
+        .sale-template-item.selected {
+            background: rgba(185,10,90,0.07);
+            box-shadow: inset 3px 0 0 #b90a5a;
+        }
+        .on-sale-badge {
+            animation: salePulse 2s ease-in-out infinite;
+        }
+        @keyframes salePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(185,10,90,0.4); }
+            50% { box-shadow: 0 0 0 5px rgba(185,10,90,0); }
+        }
+        .price-strike {
+            text-decoration: line-through;
+            color: #9ca3af;
+        }
+
+        /* Banner Panel */
+        .banner-upload-zone {
+            border: 2px dashed rgba(185,10,90,0.25);
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .banner-upload-zone:hover, .banner-upload-zone.drag-over {
+            border-color: #b90a5a;
+            background: rgba(185,10,90,0.04);
+        }
+        .banner-preview-card {
+            background: linear-gradient(135deg, #fff0f5 0%, #fff8fb 100%);
+            border: 1px solid rgba(185,10,90,0.12);
+        }
+        /* Mini popup mock */
+        .popup-mock {
+            background: rgba(0,0,0,0.45);
+        }
+        .popup-mock-inner {
+            background: white;
+            border-radius: 1.25rem;
+            overflow: hidden;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body class="bg-surface text-gray-800 min-h-screen font-sans">
@@ -180,6 +239,212 @@
 
                     <div id="admin-templates-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Templates dynamic list will render here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════════
+                 SALE MANAGEMENT SECTION
+            ══════════════════════════════════════════════════════════════ -->
+            <div class="sale-section glass-card rounded-[2rem] p-6 shadow-lg border">
+                <!-- Section Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl btn-gradient flex items-center justify-center shadow-md flex-shrink-0">
+                            <span class="material-symbols-outlined text-white text-xl">local_offer</span>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-extrabold text-gray-900 leading-tight">Run a Sale</h2>
+                            <p class="text-xs text-gray-500 mt-0.5">Select templates, pick a discount &amp; apply — original prices are always saved.</p>
+                        </div>
+                    </div>
+                    <button id="sale-clear-all-btn"
+                        class="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 text-red-600 text-xs font-bold hover:bg-red-50 transition-all duration-200">
+                        <span class="material-symbols-outlined text-base">remove_shopping_cart</span>
+                        Clear All Sales
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- LEFT: Template Selector -->
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="text-xs font-bold uppercase tracking-wider text-gray-600">Select Templates</label>
+                            <div class="flex gap-2">
+                                <button id="sale-select-all-btn" class="text-[10px] font-bold text-primary hover:underline">Select All</button>
+                                <span class="text-gray-300">|</span>
+                                <button id="sale-deselect-all-btn" class="text-[10px] font-bold text-gray-400 hover:underline">Deselect All</button>
+                            </div>
+                        </div>
+                        <div id="sale-templates-list"
+                            class="space-y-2 max-h-72 overflow-y-auto pr-1 rounded-xl custom-scroll">
+                            <!-- Populated by JS -->
+                            <p class="text-xs text-gray-400 text-center py-6">Loading templates…</p>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Discount Config & Preview -->
+                    <div class="flex flex-col gap-4">
+                        <!-- Discount Presets -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Discount %</label>
+                            <div class="flex flex-wrap gap-2" id="discount-presets">
+                                <button class="discount-preset-btn px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-600" data-pct="10">10%</button>
+                                <button class="discount-preset-btn px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-600" data-pct="15">15%</button>
+                                <button class="discount-preset-btn px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-600" data-pct="20">20%</button>
+                                <button class="discount-preset-btn px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-600" data-pct="25">25%</button>
+                                <button class="discount-preset-btn px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-600" data-pct="30">30%</button>
+                                <button class="discount-preset-btn px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-600" data-pct="40">40%</button>
+                                <button class="discount-preset-btn px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-600" data-pct="50">50%</button>
+                                <button class="discount-preset-btn px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-600" data-pct="60">60%</button>
+                                <button class="discount-preset-btn px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-600" data-pct="70">70%</button>
+                            </div>
+                            <!-- Custom % -->
+                            <div class="flex items-center gap-2 mt-3">
+                                <input type="number" id="sale-discount-custom"
+                                    min="1" max="99" placeholder="Custom %"
+                                    class="w-28 rounded-xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm">
+                                <span class="text-xs text-gray-400">Enter any value 1–99</span>
+                            </div>
+                        </div>
+
+                        <!-- Live Price Preview -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Price Preview</label>
+                            <div id="sale-price-preview"
+                                class="min-h-[80px] bg-white/60 rounded-xl border border-gray-100 p-3 space-y-2">
+                                <p class="text-xs text-gray-400 text-center py-4">Select templates &amp; discount to preview prices.</p>
+                            </div>
+                        </div>
+
+                        <!-- Status / Feedback -->
+                        <div id="sale-status" class="text-sm font-semibold hidden"></div>
+
+                        <!-- Apply Button -->
+                        <button id="sale-apply-btn"
+                            class="w-full py-3 rounded-xl btn-gradient text-white font-extrabold shadow-md hover:shadow-xl active:scale-95 transition-all duration-200 flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-lg">bolt</span>
+                            Apply Sale
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════════
+                 SALE BANNER SECTION (shown only when active sales exist)
+            ══════════════════════════════════════════════════════════════ -->
+            <div id="banner-panel" class="hidden banner-preview-card glass-card rounded-[2rem] p-6 shadow-lg border">
+                <!-- Panel Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md flex-shrink-0">
+                            <span class="material-symbols-outlined text-white text-xl">campaign</span>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-extrabold text-gray-900 leading-tight">Sale Banner Popup</h2>
+                            <p class="text-xs text-gray-500 mt-0.5">Upload a banner — visitors will see it as a popup when they open the site.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="banner-live-badge" class="hidden items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 text-green-700 text-[10px] font-extrabold uppercase tracking-wider">
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Live
+                        </span>
+                        <button id="banner-remove-btn"
+                            class="hidden items-center gap-2 px-4 py-2 rounded-xl border border-red-200 text-red-600 text-xs font-bold hover:bg-red-50 transition-all duration-200">
+                            <span class="material-symbols-outlined text-base">hide_image</span>
+                            Remove Banner
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- LEFT: Upload Form -->
+                    <div class="flex flex-col gap-4">
+
+                        <!-- Image Upload / URL -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Banner Image</label>
+
+                            <!-- Drag-drop zone -->
+                            <div id="banner-dropzone"
+                                class="banner-upload-zone rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer text-center mb-3">
+                                <span class="material-symbols-outlined text-3xl text-primary/50">add_photo_alternate</span>
+                                <p class="text-xs font-semibold text-gray-500">Drag &amp; drop or <span class="text-primary font-bold">click to choose</span></p>
+                                <p class="text-[10px] text-gray-400">JPG / PNG / WebP — max 5 MB</p>
+                                <input type="file" id="banner-image-file" accept="image/*" class="hidden">
+                            </div>
+
+                            <!-- OR URL -->
+                            <div class="flex items-center gap-2 mb-1">
+                                <hr class="flex-1 border-gray-100">
+                                <span class="text-[10px] text-gray-400 font-semibold">OR</span>
+                                <hr class="flex-1 border-gray-100">
+                            </div>
+                            <input type="url" id="banner-image-url"
+                                placeholder="Paste image URL here"
+                                class="w-full rounded-xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm mt-1">
+                        </div>
+
+                        <!-- Caption -->
+                        <div>
+                            <label for="banner-caption" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Caption (Optional)</label>
+                            <input type="text" id="banner-caption" placeholder="e.g. Limited time — up to 50% OFF!"
+                                class="w-full rounded-xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm">
+                        </div>
+
+                        <!-- CTA -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="banner-cta-text" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Button Text</label>
+                                <input type="text" id="banner-cta-text" placeholder="Shop Sale"
+                                    class="w-full rounded-xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm">
+                            </div>
+                            <div>
+                                <label for="banner-cta-link" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Button Link</label>
+                                <input type="text" id="banner-cta-link" placeholder="#templates"
+                                    class="w-full rounded-xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm">
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div id="banner-status" class="text-sm font-semibold hidden"></div>
+
+                        <!-- Save Button -->
+                        <button id="banner-save-btn"
+                            class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-extrabold shadow-md hover:shadow-xl active:scale-95 transition-all duration-200 flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-lg">upload</span>
+                            Save &amp; Activate Banner
+                        </button>
+                    </div>
+
+                    <!-- RIGHT: Live Preview -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Popup Preview</label>
+                        <div id="banner-preview-wrap" class="popup-mock rounded-2xl p-4 flex items-center justify-center min-h-[260px]">
+                            <div class="popup-mock-inner w-full max-w-xs relative">
+                                <!-- Close button -->
+                                <button class="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-black/30 text-white flex items-center justify-center text-sm pointer-events-none">
+                                    <span class="material-symbols-outlined text-sm">close</span>
+                                </button>
+                                <!-- Banner image -->
+                                <img id="banner-preview-img"
+                                    src="" alt="Banner preview"
+                                    class="w-full object-cover hidden rounded-t-[1.25rem]"
+                                    style="max-height:180px;">
+                                <!-- Placeholder when no image -->
+                                <div id="banner-preview-placeholder"
+                                    class="w-full h-40 bg-gray-100 flex items-center justify-center rounded-t-[1.25rem]">
+                                    <span class="text-gray-300 text-xs font-semibold">No image selected</span>
+                                </div>
+                                <!-- Caption + CTA -->
+                                <div class="p-4">
+                                    <p id="banner-preview-caption" class="text-sm font-bold text-gray-800 mb-3 hidden"></p>
+                                    <span id="banner-preview-cta"
+                                        class="inline-block px-5 py-2 rounded-full btn-gradient text-white text-xs font-extrabold">Shop Sale</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-gray-400 text-center mt-2">This is how the popup will look to visitors.</p>
                     </div>
                 </div>
             </div>
