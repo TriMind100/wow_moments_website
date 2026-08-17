@@ -614,9 +614,9 @@ void main() {
         fetchReviews();
 
         // ─── Active Navigation Styling & Scrollspy ────────────────────────────────
-        const desktopNavLinks = document.querySelectorAll('#top-nav div.hidden.md\\:flex a');
+        const desktopNavLinks = document.querySelectorAll('#top-nav a[href^="#"]');
         const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
-        const bottomNavLinks = document.querySelectorAll('nav.fixed.bottom-0 a');
+        const bottomNavLinks = document.querySelectorAll('nav.fixed.bottom-0 a[href^="#"]');
 
         const sections = [
             { id: 'home', element: document.querySelector('section.hero-radial-glow') },
@@ -653,7 +653,6 @@ void main() {
             bottomNavLinks.forEach(link => {
                 const href = link.getAttribute('href');
                 const isHome = href === '#' || href === '';
-                if (href === 'https://wa.me/918609539322') return;
 
                 if ((sectionId === 'home' && isHome) || href === `#${sectionId}`) {
                     link.className = "flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 transition-all duration-300";
@@ -687,7 +686,6 @@ void main() {
         bottomNavLinks.forEach(link => {
             link.addEventListener('click', () => {
                 const href = link.getAttribute('href');
-                if (href === 'https://wa.me/918609539322') return;
                 const sectionId = href === '#' || href === '' ? 'home' : href.replace('#', '');
                 setActiveLink(sectionId);
             });
@@ -700,9 +698,8 @@ void main() {
 
             sections.forEach(sec => {
                 if (sec.element) {
-                    const top = sec.element.offsetTop;
-                    const height = sec.element.offsetHeight;
-                    if (scrollPos >= top && scrollPos < top + height) {
+                    const top = sec.element.getBoundingClientRect().top + window.scrollY;
+                    if (scrollPos >= top - 20) {
                         currentSection = sec.id;
                     }
                 }
