@@ -1,13 +1,8 @@
 require('dotenv').config();
-const dns = require('dns');
-try {
-    dns.setServers(['8.8.8.8', '1.1.1.1']);
-} catch (e) {
-    console.warn('Failed to set DNS servers:', e.message);
-}
+// OS DNS resolution is used
 const fs = require('fs');
 const path = require('path');
-const mongoose = require('mongoose');
+const mongoose = require('../server/node_modules/mongoose');
 const Template = require('../server/models/Template');
 
 const DATA_FILE = path.join(__dirname, '..', 'server', 'data', 'templates.json');
@@ -41,6 +36,7 @@ async function runMigration() {
     }
 
     console.log(`Found ${templates.length} local templates. Connecting to database...`);
+    console.log('Using connection string:', dbUri);
 
     try {
         await mongoose.connect(dbUri);
