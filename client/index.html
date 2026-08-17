@@ -542,7 +542,7 @@
             <!-- Left Column: Content (uses contents display on mobile for custom order stacking) -->
             <div class="contents lg:block z-10 text-center lg:text-left lg:col-span-6 xl:col-span-5">
                 <!-- Group 1: Badge, Title, and Paragraph -->
-                <div class="order-1 flex flex-col items-center lg:items-start text-center lg:text-left">
+                <div class="order-2 flex flex-col items-center lg:items-start text-center lg:text-left w-full">
                     <!-- Turning Moments Tag -->
                     <div
                         class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#FFF0F4] text-[#b90a5a] text-xs font-bold border border-[#FFE2E8] mb-6 shadow-sm">
@@ -574,7 +574,7 @@
 
                 <!-- Group 2: Buttons -->
                 <div
-                    class="order-2 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start w-full mb-8 lg:mb-0">
+                    class="order-3 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start w-full mb-8 lg:mb-0">
                     <a class="btn-gradient px-8 py-4 rounded-full text-white font-semibold flex items-center justify-center gap-2 group shadow-[0_6px_20px_rgba(185,10,90,0.25)] hover:shadow-[0_10px_25px_rgba(185,10,90,0.35)] active:scale-95 duration-200"
                         href="#templates">
                         <!-- Sparkles icon -->
@@ -603,7 +603,7 @@
 
             <!-- Right Column: Interactive Mockups -->
             <div
-                class="relative z-10 lg:col-span-6 xl:col-span-7 flex flex-col justify-center items-center order-3 lg:order-none w-full">
+                class="relative z-10 lg:col-span-6 xl:col-span-7 flex flex-col justify-center items-center order-1 lg:order-none w-full">
                 <!-- Mockup Showcase Area -->
                 <div
                     class="relative w-full aspect-[4/3.2] flex items-center justify-center select-none pt-4 max-w-[540px] lg:max-w-[460px] xl:max-w-[520px] 2xl:max-w-[580px] hero-short-screen-mockup">
@@ -622,11 +622,7 @@
                                 <!-- Browser Top bar -->
                                 <div
                                     class="w-full h-4 bg-gray-50 border-b border-gray-100 flex items-center px-2 gap-1 select-none shrink-0">
-                                    <div class="w-1.5 h-1.5 rounded-full bg-red-400"></div>
-                                    <div class="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
-                                    <div class="w-1.5 h-1.5 rounded-full bg-green-400"></div>
-                                </div>
-                                <!-- Browser webpage body styled like the user's "LOVE Our Story" screenshot -->
+                                                                  <!-- Browser webpage body styled like the user's "LOVE Our Story" screenshot -->
                                 <div class="flex-1 bg-cover bg-center flex flex-col justify-between p-2.5 relative select-none"
                                     style="background-image: url('assets/img1.png');">
                                     <!-- Dark Overlay for readability -->
@@ -753,8 +749,8 @@
                         <div class="w-full h-full overflow-hidden relative select-none bg-gray-950 border-[0.2px] border-black/80"
                             style="border-radius: 13.5%;">
                             <!-- Background Image cover -->
-                            <img class="absolute inset-0 w-full h-full object-cover z-0" src="assets/img2.png"
-                                alt="Couple photo on phone">
+                            <img class="absolute inset-0 w-full h-full object-cover z-0 transition-all duration-500" src="assets/love_story_preview.png"
+                                alt="Couple photo on phone" id="mock-phone-img">
                             <!-- Gradient overlay for text readability -->
                             <div
                                 class="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/65 z-10">
@@ -780,12 +776,12 @@
                                 <div class="flex-1 flex flex-col justify-between pt-1">
                                     <div class="text-left space-y-0.5 mt-2">
                                         <span
-                                            class="text-[3px] px-1 py-0.2 rounded bg-white/20 backdrop-blur-sm text-white font-bold border border-white/10">Gift
-                                            Idea</span>
-                                        <h4 class="text-[7.5px] font-black text-white leading-tight drop-shadow-sm">
-                                            My Everything</h4>
-                                        <p class="text-[3.5px] text-white/80 leading-normal drop-shadow-sm">Reasons
-                                            why I love you.</p>
+                                            class="text-[3px] px-1 py-0.2 rounded bg-white/20 backdrop-blur-sm text-white font-bold border border-white/10 transition-all duration-300"
+                                            id="mock-phone-tag">Love Story</span>
+                                        <h4 class="text-[7.5px] font-black text-white leading-tight drop-shadow-sm transition-all duration-300"
+                                            id="mock-phone-title">My Everything</h4>
+                                        <p class="text-[3.5px] text-white/80 leading-normal drop-shadow-sm transition-all duration-300"
+                                            id="mock-phone-desc">Reasons why I love you.</p>
                                     </div>
 
                                     <div class="flex justify-center py-0.5">
