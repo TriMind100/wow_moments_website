@@ -449,6 +449,96 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ══════════════════════════════════════════════════════════════
+                 REVIEWS MANAGEMENT SECTION
+            ══════════════════════════════════════════════════════════════ -->
+            <div class="glass-card rounded-[2rem] p-6 shadow-lg border bg-white/75 mt-8">
+                <!-- Section Header -->
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-11 h-11 rounded-2xl btn-gradient flex items-center justify-center shadow-md flex-shrink-0">
+                        <span class="material-symbols-outlined text-white text-xl">reviews</span>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-extrabold text-gray-900 leading-tight">Reviews Moderation & Management</h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Moderate customer reviews or add new customer testimonials directly.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- LEFT COLUMN: Add/Edit Review Form -->
+                    <div class="lg:col-span-5 bg-white/50 border border-gray-100 rounded-2xl p-5 shadow-sm h-fit">
+                        <h3 id="admin-rev-form-title" class="text-sm font-extrabold text-gray-900 mb-1">Add New Review</h3>
+                        <p id="admin-rev-form-subtitle" class="text-[11px] text-gray-400 mb-4">Post directly as an approved testimonial.</p>
+                        
+                        <form id="admin-review-form" class="space-y-4" enctype="multipart/form-data">
+                            <div>
+                                <label for="admin-rev-name" class="block text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1">Reviewer Name</label>
+                                <input type="text" id="admin-rev-name" name="name" placeholder="e.g. Rahul Verma" required class="w-full rounded-xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="admin-rev-location" class="block text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1">Location</label>
+                                    <input type="text" id="admin-rev-location" name="location" placeholder="e.g. Bengaluru" class="w-full rounded-xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm">
+                                </div>
+                                <div>
+                                    <label for="admin-rev-rating" class="block text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1">Rating</label>
+                                    <select id="admin-rev-rating" name="rating" required class="w-full rounded-xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm">
+                                        <option value="5">⭐⭐⭐⭐⭐ (5 Stars)</option>
+                                        <option value="4">⭐⭐⭐⭐ (4 Stars)</option>
+                                        <option value="3">⭐⭐⭐ (3 Stars)</option>
+                                        <option value="2">⭐⭐ (2 Stars)</option>
+                                        <option value="1">⭐ (1 Star)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="admin-rev-comment" class="block text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1">Feedback/Comment</label>
+                                <textarea id="admin-rev-comment" name="comment" rows="3" placeholder="Paste the feedback here..." required class="w-full rounded-xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm"></textarea>
+                            </div>
+
+                            <div>
+                                <label for="admin-rev-status" class="block text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1">Moderation Status</label>
+                                <select id="admin-rev-status" name="status" class="w-full rounded-xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm">
+                                    <option value="approved">Approved (Live)</option>
+                                    <option value="pending">Pending Approval</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1">Reviewer Avatar File</label>
+                                <input type="file" id="admin-rev-avatar" name="avatarFile" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
+                                <span id="admin-rev-avatar-help" class="block text-[9px] text-gray-400 mt-1">Leave empty to use existing image or initials fallback.</span>
+                            </div>
+
+                            <div id="admin-rev-error" class="text-xs text-red-600 font-semibold hidden"></div>
+                            <div id="admin-rev-success" class="text-xs text-green-600 font-semibold hidden"></div>
+
+                            <button type="submit" id="admin-rev-submit-btn" class="w-full py-2.5 rounded-xl btn-gradient text-white font-bold shadow-md hover:shadow-lg active:scale-98 transition-all duration-200 text-sm">
+                                Add Review
+                            </button>
+                            <button type="button" id="admin-rev-cancel-btn" class="w-full mt-2 py-2 rounded-xl border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 active:scale-98 transition-all duration-200 text-sm hidden">
+                                Cancel Edit
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- RIGHT COLUMN: Reviews List -->
+                    <div class="lg:col-span-7 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-sm font-bold text-gray-900">Current Testimonials</h3>
+                            <span id="admin-reviews-count" class="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">0 Reviews</span>
+                        </div>
+
+                        <div id="admin-reviews-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                            <!-- Dynamically loaded review items -->
+                            <p class="text-xs text-gray-400 text-center py-8">Loading reviews...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
     </main>
 

@@ -1083,62 +1083,31 @@
         </div>
     </section>
     <!-- Reviews Section -->
-    <!-- <section class="py-section-gap bg-surface/30 px-gutter overflow-hidden reveal-anim">
-        <div class="max-w-container-max mx-auto text-center mb-16">
+    <section class="py-section-gap bg-surface/30 px-gutter overflow-hidden reveal-anim" id="reviews">
+        <div class="max-w-container-max mx-auto text-center mb-16 relative">
             <h2 class="text-4xl md:text-5xl font-extrabold mb-4 brand-font">Hearts We've Touched</h2>
-            <p class="text-on-surface-variant">Don't take our word for it—listen to our happy customers.</p>
+            <p class="text-on-surface-variant mb-6">Don't take our word for it—listen to our happy customers.</p>
+            <button id="write-review-btn" class="px-6 py-2.5 rounded-full border border-primary text-primary hover:bg-primary/5 font-extrabold text-sm transition-all duration-200 active:scale-95 flex items-center gap-2 mx-auto shadow-sm">
+                <span class="material-symbols-outlined text-lg">rate_review</span> Write a Review
+            </button>
         </div>
-        <div class="flex gap-8 overflow-x-auto pb-12 custom-scrollbar px-gutter max-w-7xl mx-auto no-scrollbar">
-            <div class="flex-none w-80 glass-card review-card p-8 rounded-[2rem] flex flex-col">
-                <div class="flex gap-1 text-yellow-500 mb-4">
-                    <span class="material-symbols-outlined text-sm"
-                        style="font-variation-settings: 'FILL' 1;">star</span>
-                    <span class="material-symbols-outlined text-sm"
-                        style="font-variation-settings: 'FILL' 1;">star</span>
-                    <span class="material-symbols-outlined text-sm"
-                        style="font-variation-settings: 'FILL' 1;">star</span>
-                    <span class="material-symbols-outlined text-sm"
-                        style="font-variation-settings: 'FILL' 1;">star</span>
-                    <span class="material-symbols-outlined text-sm"
-                        style="font-variation-settings: 'FILL' 1;">star</span>
-                </div>
-                <p class="italic text-on-surface-variant mb-8">"The anniversary website was the highlight of our 5th
-                    anniversary. My wife was in tears! The quality is just premium."</p>
-                <div class="mt-auto flex items-center gap-4">
-                    <img class="w-12 h-12 rounded-full object-cover"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCv5hSotoC2bk7fYbnjPqkhFzxBERKm0GPfK9iiarIHfjOr6aWpmnoMAxm3WwHNw6Wrxxlfx-jxYffuybYm2mTd4ov_s0CshpOV8f8X6dQv3JXUCZrzJgffi3OTeVHshJ6BYqQIjj0FBKRv0b8KsKRLCcXm853_H8TDD8osNEdL21LPoTypkG9Kylj1BnDxQGA2cGm7tboXTR-mdwRgnEmi4NNBMI2jApBVD09SbyT9NZAhWoo9Bfu9gL-GwYxWSssNZFu_AAFEIw" />
-                    <div>
-                        <p class="font-bold">Rahul Verma</p>
-                        <p class="text-xs text-primary uppercase font-bold tracking-widest">Bengaluru</p>
-                    </div>
-                </div>
-            </div>
-            <div class="flex-none w-80 glass-card review-card p-8 rounded-[2rem] flex flex-col">
-                <div class="flex gap-1 text-yellow-500 mb-4">
-                    <span class="material-symbols-outlined text-sm"
-                        style="font-variation-settings: 'FILL' 1;">star</span>
-                    <span class="material-symbols-outlined text-sm"
-                        style="font-variation-settings: 'FILL' 1;">star</span>
-                    <span class="material-symbols-outlined text-sm"
-                        style="font-variation-settings: 'FILL' 1;">star</span>
-                    <span class="material-symbols-outlined text-sm"
-                        style="font-variation-settings: 'FILL' 1;">star</span>
-                    <span class="material-symbols-outlined text-sm"
-                        style="font-variation-settings: 'FILL' 1;">star</span>
-                </div>
-                <p class="italic text-on-surface-variant mb-8">"Ordered a digital scrapbook for my best friend's
-                    wedding. The animations were so fluid. It felt like a real book!"</p>
-                <div class="mt-auto flex items-center gap-4">
-                    <img class="w-12 h-12 rounded-full object-cover"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9qmSupc_EC9P4oGYSY36BoTa2lfyTX6_sNnAsXpTBO6v1t0-mUVM_u8VARr08DBxgGR_CgmP4bT4d2EbUCB21oDTRULlFU_YTjAYVkuMVugWwU59bRNZwVSmcvmRJ4MYEv_bOiumhWPacksZqwrWI5qYvvxJBdlubwSkEHIGAIRW3GSqZ85X-hPbjoHEwteYbJiR0dNRokLQh65z-5AUZG0HcNbn11laiNGh1Z99RMzrY5G4ygcDCqkqTK-tKxiBUqOuXFXksRg" />
-                    <div>
-                        <p class="font-bold">Sneha Kapoor</p>
-                        <p class="text-xs text-primary uppercase font-bold tracking-widest">Mumbai</p>
-                    </div>
-                </div>
+        
+        <!-- Horizontal scroll wrapper -->
+        <div class="relative max-w-7xl mx-auto px-gutter">
+            <!-- Navigation arrows -->
+            <button id="reviews-prev" class="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/80 shadow-md hover:bg-white text-gray-800 flex items-center justify-center transition-all duration-200 border border-gray-100 disabled:opacity-0 active:scale-90">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <button id="reviews-next" class="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white/80 shadow-md hover:bg-white text-gray-800 flex items-center justify-center transition-all duration-200 border border-gray-100 disabled:opacity-0 active:scale-90">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+            
+            <div class="flex gap-8 overflow-x-auto pb-12 custom-scrollbar px-gutter max-w-7xl mx-auto scroll-smooth no-scrollbar" id="reviews-container" style="scroll-snap-type: x mandatory;">
+                <!-- Reviews will be dynamically injected here -->
+                <div class="col-span-full text-center py-8 text-gray-500 font-medium w-full">Loading reviews...</div>
             </div>
         </div>
-    </section> -->
+    </section>
     <!-- FAQ Section -->
     <section id="faq" class="py-section-gap px-gutter bg-surface-container-low/30 reveal-anim">
         <div class="max-w-3xl mx-auto">
@@ -1307,6 +1276,60 @@
             <span class="text-[10px] mt-1">WhatsApp</span>
         </a>
     </nav>
+
+    <!-- Write Review Modal Overlay -->
+    <div id="review-modal-overlay" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-card bg-white/95 rounded-[2.5rem] w-full max-w-lg p-8 mx-4 border border-white/50 shadow-2xl relative transform translate-y-8 transition-transform duration-300" id="review-modal-card">
+            <!-- Close Button -->
+            <button id="review-modal-close" class="absolute top-6 right-6 w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-all duration-200 active:scale-90">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+            
+            <h3 class="text-3xl font-extrabold mb-2 brand-font">Write a Review</h3>
+            <p class="text-on-surface-variant text-sm mb-6">Share your experience with us and help others find the perfect gift.</p>
+            
+            <form id="public-review-form" class="space-y-4" enctype="multipart/form-data">
+                <div>
+                    <label for="review-name" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Your Name</label>
+                    <input type="text" id="review-name" name="name" required placeholder="e.g. Rahul Verma" class="w-full rounded-2xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="review-location" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Your Location</label>
+                        <input type="text" id="review-location" name="location" placeholder="e.g. Delhi" class="w-full rounded-2xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm">
+                    </div>
+                    <div>
+                        <label for="review-rating" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Rating</label>
+                        <select id="review-rating" name="rating" required class="w-full rounded-2xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm">
+                            <option value="5">⭐⭐⭐⭐⭐ (5 Stars)</option>
+                            <option value="4">⭐⭐⭐⭐ (4 Stars)</option>
+                            <option value="3">⭐⭐⭐ (3 Stars)</option>
+                            <option value="2">⭐⭐ (2 Stars)</option>
+                            <option value="1">⭐ (1 Star)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="review-comment" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Your Feedback</label>
+                    <textarea id="review-comment" name="comment" rows="3" required placeholder="Tell us what you liked about our gift templates..." class="w-full rounded-2xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Profile Photo (Optional)</label>
+                    <input type="file" id="review-avatar-file" name="avatarFile" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
+                </div>
+                
+                <div id="review-form-error" class="text-xs text-red-600 font-semibold hidden"></div>
+                <div id="review-form-success" class="text-xs text-green-600 font-semibold hidden"></div>
+                
+                <button type="submit" id="review-form-submit" class="w-full py-3.5 rounded-2xl btn-gradient text-white font-bold shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 text-sm mt-2">
+                    <span class="material-symbols-outlined text-lg">send</span> Submit Review
+                </button>
+            </form>
+        </div>
+    </div>
 
     <script src="script.js" defer></script>
 </body>

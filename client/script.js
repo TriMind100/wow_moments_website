@@ -1,5 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
     // ----------------------------------------------------------------
+    // API Configuration (Vercel Client -> Render Server)
+    // ----------------------------------------------------------------
+    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === ''
+        ? 'http://localhost:3000'
+        : 'https://wow-moments-backend.onrender.com'; // Replace with your actual Render API URL in production
+    // ----------------------------------------------------------------
     // 1. WebGL Background Animation
     // ----------------------------------------------------------------
     (function () {
@@ -127,6 +133,8 @@ void main() {
                 const card = document.createElement('div');
                 card.className = "template-card glass-card review-card rounded-[2rem] overflow-hidden flex flex-col p-2 group";
                 
+                const imageUrl = t.image && t.image.startsWith('/') ? `${API_BASE}${t.image}` : t.image;
+                
                 let priceHtml;
                 if (t.discountPercent > 0 && t.originalPrice) {
                     priceHtml = `
@@ -144,7 +152,7 @@ void main() {
 
                 card.innerHTML = `
                     <div class="relative overflow-hidden rounded-[1.8rem]">
-                        <img class="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-700" src="${t.image}" alt="${t.name}">
+                        <img class="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-700" src="${imageUrl}" alt="${t.name}">
                         ${t.tag ? `<div class="absolute top-4 left-4 ${t.tagColor} text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">${t.tag}</div>` : ''}
                     </div>
                     <div class="p-6 flex-1 flex flex-col justify-between">
@@ -178,7 +186,7 @@ void main() {
         // Fetch templates from API
         async function fetchTemplates() {
             try {
-                const response = await fetch('/api/templates');
+                const response = await fetch(`${API_BASE}/api/templates`);
                 if (!response.ok) throw new Error('Network response was not ok');
                 templates = await response.json();
                 renderTemplates(templates);
@@ -328,7 +336,7 @@ void main() {
         if (sessionStorage.getItem('salePopupDismissed')) return;
 
         try {
-            const res  = await fetch('/api/banner');
+            const res  = await fetch(`${API_BASE}/api/banner`);
             const data = await res.json();
 
             if (!data.active || !data.image) return; // no active banner
@@ -381,5 +389,182 @@ void main() {
         } catch (err) {
             console.warn('Could not load sale banner:', err);
         }
+    })();
+
+    // ----------------------------------------------------------------
+    // 7. Dynamic Reviews System (Carousel & Submission)
+    // ----------------------------------------------------------------
+    (async function initReviewsSystem() {
+        const container = document.getElementById('reviews-container');
+        const prevBtn = document.getElementById('reviews-prev');
+        const nextBtn = document.getElementById('reviews-next');
+        const writeBtn = document.getElementById('write-review-btn');
+        const modalOverlay = document.getElementById('review-modal-overlay');
+        const modalClose = document.getElementById('review-modal-close');
+        const form = document.getElementById('public-review-form');
+        const formError = document.getElementById('review-form-error');
+        const formSuccess = document.getElementById('review-form-success');
+
+        if (!container) return;
+
+        // Render stars helper
+        function renderStars(rating) {
+            let starsHtml = '';
+            for (let i = 0; i < 5; i++) {
+                const filled = i < rating;
+                starsHtml += `<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' ${filled ? 1 : 0};">star</span>`;
+            }
+            return starsHtml;
+        }
+
+        // Render reviews list
+        function renderReviewsList(reviews) {
+            container.innerHTML = '';
+            if (reviews.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-500 font-medium w-full">No reviews yet. Be the first to write one!</div>`;
+                if (prevBtn) prevBtn.style.display = 'none';
+                if (nextBtn) nextBtn.style.display = 'none';
+                return;
+            }
+
+            reviews.forEach(r => {
+                const card = document.createElement('div');
+                card.className = "flex-none w-80 glass-card review-card p-8 rounded-[2rem] flex flex-col";
+                card.style.scrollSnapAlign = "start";
+
+                // Avatar selection (image or initials fallback)
+                let avatarHtml;
+                if (r.avatar) {
+                    avatarHtml = `<img class="w-12 h-12 rounded-full object-cover bg-gray-50 flex-shrink-0" src="${r.avatar}" alt="${r.name}">`;
+                } else {
+                    const initials = r.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                    avatarHtml = `<div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm tracking-wider uppercase flex-shrink-0">${initials}</div>`;
+                }
+
+                card.innerHTML = `
+                    <div class="flex gap-1 text-yellow-500 mb-4 flex-shrink-0">
+                        ${renderStars(r.rating)}
+                    </div>
+                    <p class="italic text-on-surface-variant mb-8 font-body-md flex-grow overflow-y-auto pr-1">"${r.comment}"</p>
+                    <div class="mt-auto flex items-center gap-4 flex-shrink-0">
+                        ${avatarHtml}
+                        <div>
+                            <p class="font-bold text-sm text-gray-800">${r.name}</p>
+                            ${r.location ? `<p class="text-xs text-primary uppercase font-bold tracking-widest mt-0.5">${r.location}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            updateArrows();
+        }
+
+        // Fetch approved reviews
+        async function fetchReviews() {
+            try {
+                const res = await fetch(`${API_BASE}/api/reviews`);
+                if (!res.ok) throw new Error();
+                const reviews = await res.json();
+                renderReviewsList(reviews);
+            } catch (err) {
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-red-500 font-medium w-full">Failed to load reviews.</div>`;
+            }
+        }
+
+        // Scroll functionality
+        if (prevBtn && nextBtn) {
+            prevBtn.addEventListener('click', () => {
+                container.scrollBy({ left: -320, behavior: 'smooth' });
+            });
+            nextBtn.addEventListener('click', () => {
+                container.scrollBy({ left: 320, behavior: 'smooth' });
+            });
+
+            container.addEventListener('scroll', updateArrows);
+        }
+
+        function updateArrows() {
+            if (!prevBtn || !nextBtn) return;
+            const scrollLeft = container.scrollLeft;
+            const maxScroll = container.scrollWidth - container.clientWidth;
+            
+            prevBtn.disabled = scrollLeft <= 5;
+            nextBtn.disabled = scrollLeft >= maxScroll - 5;
+        }
+
+        // Modal triggers
+        if (writeBtn && modalOverlay && modalClose) {
+            writeBtn.addEventListener('click', () => {
+                modalOverlay.classList.add('visible');
+                document.body.style.overflow = 'hidden';
+                formError.classList.add('hidden');
+                formSuccess.classList.add('hidden');
+                form.reset();
+            });
+
+            const closeModal = () => {
+                modalOverlay.classList.remove('visible');
+                document.body.style.overflow = '';
+            };
+
+            modalClose.addEventListener('click', closeModal);
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) closeModal();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modalOverlay.classList.contains('visible')) {
+                    closeModal();
+                }
+            });
+        }
+
+        // Submit public review form
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                formError.classList.add('hidden');
+                formSuccess.classList.add('hidden');
+
+                const submitBtn = document.getElementById('review-form-submit');
+                submitBtn.disabled = true;
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = `<span class="material-symbols-outlined animate-spin text-lg">sync</span> Submitting...`;
+
+                const formData = new FormData(form);
+
+                try {
+                    const response = await fetch(`${API_BASE}/api/reviews`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        formSuccess.textContent = "Thank you! Your review has been submitted for admin approval.";
+                        formSuccess.classList.remove('hidden');
+                        form.reset();
+                        setTimeout(() => {
+                            modalOverlay.classList.remove('visible');
+                            document.body.style.overflow = '';
+                            fetchReviews(); // refetch reviews in case it's auto-approved
+                        }, 2000);
+                    } else {
+                        formError.textContent = data.error || 'Failed to submit review';
+                        formError.classList.remove('hidden');
+                    }
+                } catch (err) {
+                    formError.textContent = 'Server error. Failed to submit review.';
+                    formError.classList.remove('hidden');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            });
+        }
+
+        // Load reviews initially
+        fetchReviews();
     })();
 });

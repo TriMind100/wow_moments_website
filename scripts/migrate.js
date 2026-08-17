@@ -8,9 +8,9 @@ try {
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
-const Template = require('../models/Template');
+const Template = require('../server/models/Template');
 
-const DATA_FILE = path.join(__dirname, '..', 'data', 'templates.json');
+const DATA_FILE = path.join(__dirname, '..', 'server', 'data', 'templates.json');
 
 async function runMigration() {
     console.log('Starting data migration...');

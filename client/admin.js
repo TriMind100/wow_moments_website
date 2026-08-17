@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // ----------------------------------------------------
+    // API Configuration (Vercel Client -> Render Server)
+    // ----------------------------------------------------
+    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === ''
+        ? 'http://localhost:3000'
+        : 'https://wow-moments-backend.onrender.com'; // Replace with actual Render backend URL
     const loginSection = document.getElementById('login-section');
     const dashboardSection = document.getElementById('dashboard-section');
     const loginForm = document.getElementById('login-form');
@@ -16,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     async function checkAuth() {
         try {
-            const response = await fetch('/api/check-auth');
+            const response = await fetch(`${API_BASE}/api/check-auth`);
             const data = await response.json();
             if (data.isAdmin) {
                 showDashboard();
@@ -34,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dashboardSection.classList.remove('hidden');
         logoutBtn.classList.remove('hidden');
         loadTemplates();
+        loadReviews();
     }
 
     function showLogin() {
@@ -53,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = loginForm.password.value;
 
         try {
-            const response = await fetch('/api/login', {
+            const response = await fetch(`${API_BASE}/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
@@ -75,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     logoutBtn.addEventListener('click', async () => {
         try {
-            await fetch('/api/logout', { method: 'POST' });
+            await fetch(`${API_BASE}/api/logout`, { method: 'POST' });
             showLogin();
         } catch (err) {
             console.error('Logout error:', err);
@@ -87,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     async function loadTemplates() {
         try {
-            const response = await fetch('/api/templates');
+            const response = await fetch(`${API_BASE}/api/templates`);
             const templates = await response.json();
             renderTemplatesList(templates);
         } catch (err) {
@@ -125,8 +132,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 priceHtml = `<span class="text-sm font-semibold text-primary">${t.price}</span>`;
             }
 
+            const imageUrl = t.image && t.image.startsWith('/') ? `${API_BASE}${t.image}` : t.image;
             card.innerHTML = `
-                <img src="${t.image}" alt="${t.name}" class="w-20 h-20 object-cover rounded-xl bg-gray-50 flex-shrink-0">
+                <img src="${imageUrl}" alt="${t.name}" class="w-20 h-20 object-cover rounded-xl bg-gray-50 flex-shrink-0">
                 <div class="flex-grow min-w-0 pr-16">
                     <h3 class="font-bold text-base truncate">${t.name}</h3>
                     <div class="flex items-center flex-wrap gap-1 mt-0.5">${priceHtml}</div>
@@ -225,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deleteTemplate(id) {
         try {
-            const response = await fetch(`/api/templates/${id}`, {
+            const response = await fetch(`${API_BASE}/api/templates/${id}`, {
                 method: 'DELETE'
             });
 
@@ -276,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const url = isEditing ? `/api/templates/${editId}` : '/api/templates';
+        const url = isEditing ? `${API_BASE}/api/templates/${editId}` : `${API_BASE}/api/templates`;
         const method = isEditing ? 'PUT' : 'POST';
 
         try {
@@ -344,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
             item.innerHTML = `
                 <input type="checkbox" id="sale-chk-${t.id}" class="rounded border-gray-300 text-primary focus:ring-primary"
                     ${isSelected ? 'checked' : ''}>
-                <img src="${t.image}" alt="${t.name}" class="w-9 h-9 rounded-lg object-cover flex-shrink-0 bg-gray-100">
+                <img src="${t.image && t.image.startsWith('/') ? `${API_BASE}${t.image}` : t.image}" alt="${t.name}" class="w-9 h-9 rounded-lg object-cover flex-shrink-0 bg-gray-100">
                 <div class="flex-grow min-w-0">
                     <p class="text-xs font-bold truncate">${t.name}</p>
                     <div class="flex items-center gap-1 flex-wrap mt-0.5">${priceDisplay}</div>
@@ -463,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saleApplyBtn.textContent = 'Applying…';
 
         try {
-            const res = await fetch('/api/sales/run', {
+            const res = await fetch(`${API_BASE}/api/sales/run`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -495,7 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saleClearAllBtn.textContent = 'Clearing…';
 
         try {
-            const res = await fetch('/api/sales/clear', {
+            const res = await fetch(`${API_BASE}/api/sales/clear`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({})
@@ -584,7 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
     /** Load existing banner from API and populate the form / badge */
     async function loadBannerState() {
         try {
-            const res = await fetch('/api/banner');
+            const res = await fetch(`${API_BASE}/api/banner`);
             const data = await res.json();
             if (data.active) {
                 setBannerPreviewImage(data.image);
@@ -619,7 +627,7 @@ document.addEventListener('DOMContentLoaded', () => {
     /** Deactivate banner via API */
     async function deactivateBanner(silent = false) {
         try {
-            const res = await fetch('/api/banner', { method: 'DELETE' });
+            const res = await fetch(`${API_BASE}/api/banner`, { method: 'DELETE' });
             if (res.ok) {
                 bannerLiveBadge.classList.add('hidden');
                 bannerLiveBadge.classList.remove('flex');
@@ -709,7 +717,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('ctaText', bannerCtaText.value.trim() || 'Shop Sale');
             formData.append('ctaLink', bannerCtaLink.value.trim() || '#templates');
 
-            const res  = await fetch('/api/banner', { method: 'POST', body: formData });
+            const res  = await fetch(`${API_BASE}/api/banner`, { method: 'POST', body: formData });
             const data = await res.json();
 
             if (res.ok) {
@@ -736,6 +744,256 @@ document.addEventListener('DOMContentLoaded', () => {
         await deactivateBanner(false);
         bannerRemoveBtn.disabled = false;
     });
+
+    // ----------------------------------------------------------------
+    // Reviews Management
+    // ----------------------------------------------------------------
+    const adminReviewForm = document.getElementById('admin-review-form');
+    const adminRevFormTitle = document.getElementById('admin-rev-form-title');
+    const adminRevFormSubtitle = document.getElementById('admin-rev-form-subtitle');
+    const adminRevSubmitBtn = document.getElementById('admin-rev-submit-btn');
+    const adminRevCancelBtn = document.getElementById('admin-rev-cancel-btn');
+    const adminRevError = document.getElementById('admin-rev-error');
+    const adminRevSuccess = document.getElementById('admin-rev-success');
+    const adminReviewsList = document.getElementById('admin-reviews-list');
+    const adminReviewsCount = document.getElementById('admin-reviews-count');
+
+    let isRevEditing = false;
+    let revEditId = null;
+    let currentRevAvatarUrl = null;
+    let reviewsList = [];
+
+    async function loadReviews() {
+        if (!adminReviewsList) return;
+        try {
+            const response = await fetch(`${API_BASE}/api/reviews/admin`);
+            if (response.ok) {
+                reviewsList = await response.json();
+                renderAdminReviewsList(reviewsList);
+            }
+        } catch (err) {
+            console.error('Error loading reviews:', err);
+        }
+    }
+
+    function renderAdminReviewsList(reviews) {
+        adminReviewsList.innerHTML = '';
+        adminReviewsCount.textContent = `${reviews.length} Reviews`;
+
+        if (reviews.length === 0) {
+            adminReviewsList.innerHTML = '<p class="text-xs text-gray-400 text-center py-8">No reviews found.</p>';
+            return;
+        }
+
+        reviews.forEach(r => {
+            const card = document.createElement('div');
+            card.className = 'bg-white border border-gray-100 rounded-2xl p-4 flex gap-4 items-start shadow-sm relative group hover:border-gray-200 transition-all duration-200';
+
+            // Moderation Status Badge
+            const isApproved = r.status === 'approved';
+            const statusBadge = isApproved
+                ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200">Live</span>`
+                : `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">Pending</span>`;
+
+            // Star icons rating
+            let ratingStars = '';
+            for (let i = 1; i <= 5; i++) {
+                ratingStars += `<span class="material-symbols-outlined text-xs text-yellow-500" style="font-variation-settings: 'FILL' ${i <= r.rating ? 1 : 0}">star</span>`;
+            }
+
+            // Avatar helper
+            let avatarHtml;
+            if (r.avatar) {
+                avatarHtml = `<img src="${r.avatar}" alt="${r.name}" class="w-12 h-12 object-cover rounded-full bg-gray-50 flex-shrink-0">`;
+            } else {
+                const initials = r.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                avatarHtml = `<div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase flex-shrink-0">${initials}</div>`;
+            }
+
+            card.innerHTML = `
+                ${avatarHtml}
+                <div class="flex-grow min-w-0 pr-24">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h4 class="font-bold text-sm truncate">${r.name}</h4>
+                        ${statusBadge}
+                    </div>
+                    <div class="text-[10px] text-gray-400 flex items-center gap-1.5 mt-0.5">
+                        ${r.location ? `<span>${r.location}</span> • ` : ''}
+                        <span>${new Date(r.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div class="flex gap-0.5 my-1.5">${ratingStars}</div>
+                    <p class="text-xs text-gray-600 line-clamp-3 italic">"${r.comment}"</p>
+                </div>
+                <div class="absolute right-3 top-4 flex flex-col gap-1.5">
+                    <!-- Approve Toggle Button -->
+                    <button data-id="${r.id}" data-action="toggle-status" class="toggle-status-btn px-2 py-1 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition-all duration-200 ${isApproved ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'bg-green-50 text-green-700 hover:bg-green-100'}" title="${isApproved ? 'Unapprove (Hide)' : 'Approve (Publish)'}">
+                        <span class="material-symbols-outlined text-xs">${isApproved ? 'unpublished' : 'check_circle'}</span>
+                        ${isApproved ? 'Hide' : 'Approve'}
+                    </button>
+                    <div class="flex gap-1.5 justify-end">
+                        <button data-id="${r.id}" data-action="edit" class="edit-review-btn w-7 h-7 rounded-full bg-primary/5 hover:bg-primary/10 text-primary flex items-center justify-center transition-all duration-200" title="Edit Review">
+                            <span class="material-symbols-outlined text-sm">edit</span>
+                        </button>
+                        <button data-id="${r.id}" data-action="delete" class="delete-review-btn w-7 h-7 rounded-full bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-all duration-200" title="Delete Review">
+                            <span class="material-symbols-outlined text-sm">delete</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+            adminReviewsList.appendChild(card);
+        });
+
+        // Add event listeners
+        adminReviewsList.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = btn.getAttribute('data-id');
+                const action = btn.getAttribute('data-action');
+                const review = reviewsList.find(r => r.id === id);
+
+                if (!review) return;
+
+                if (action === 'toggle-status') {
+                    const newStatus = review.status === 'approved' ? 'pending' : 'approved';
+                    await updateReviewStatus(review, newStatus);
+                } else if (action === 'edit') {
+                    startEditReview(review);
+                } else if (action === 'delete') {
+                    if (confirm(`Are you sure you want to delete the review from ${review.name}?`)) {
+                        await deleteReview(review.id);
+                    }
+                }
+            });
+        });
+    }
+
+    async function updateReviewStatus(review, newStatus) {
+        try {
+            const formData = new FormData();
+            formData.append('name', review.name);
+            formData.append('rating', review.rating);
+            formData.append('comment', review.comment);
+            formData.append('location', review.location || '');
+            if (review.avatar) formData.append('avatarUrl', review.avatar);
+            formData.append('status', newStatus);
+
+            const res = await fetch(`${API_BASE}/api/reviews/${review.id}`, {
+                method: 'PUT',
+                body: formData
+            });
+
+            if (res.ok) {
+                loadReviews();
+            } else {
+                const err = await res.json();
+                alert(err.error || 'Failed to update review status');
+            }
+        } catch (err) {
+            console.error('Error toggling review status:', err);
+        }
+    }
+
+    function startEditReview(review) {
+        isRevEditing = true;
+        revEditId = review.id;
+        currentRevAvatarUrl = review.avatar;
+
+        adminRevFormTitle.textContent = 'Edit Review';
+        adminRevFormSubtitle.textContent = `Updating feedback from: ${review.name}`;
+        adminRevSubmitBtn.textContent = 'Update Review';
+        adminRevCancelBtn.classList.remove('hidden');
+        document.getElementById('admin-rev-avatar-help').textContent = 'Leave empty to keep current avatar.';
+
+        adminReviewForm.name.value = review.name;
+        adminReviewForm.location.value = review.location || '';
+        adminReviewForm.rating.value = review.rating;
+        adminReviewForm.comment.value = review.comment;
+        adminReviewForm.status.value = review.status;
+
+        document.getElementById('admin-rev-avatar').value = '';
+
+        adminRevFormTitle.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelEditReview() {
+        isRevEditing = false;
+        revEditId = null;
+        currentRevAvatarUrl = null;
+
+        adminRevFormTitle.textContent = 'Add New Review';
+        adminRevFormSubtitle.textContent = 'Post directly as an approved testimonial.';
+        adminRevSubmitBtn.textContent = 'Add Review';
+        adminRevCancelBtn.classList.add('hidden');
+        document.getElementById('admin-rev-avatar-help').textContent = 'Leave empty to use initials fallback.';
+
+        adminReviewForm.reset();
+    }
+
+    if (adminRevCancelBtn) {
+        adminRevCancelBtn.addEventListener('click', cancelEditReview);
+    }
+
+    async function deleteReview(id) {
+        try {
+            const res = await fetch(`${API_BASE}/api/reviews/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                if (isRevEditing && revEditId === id) cancelEditReview();
+                loadReviews();
+            } else {
+                const err = await res.json();
+                alert(err.error || 'Failed to delete review');
+            }
+        } catch (err) {
+            console.error('Error deleting review:', err);
+        }
+    }
+
+    if (adminReviewForm) {
+        adminReviewForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            adminRevError.classList.add('hidden');
+            adminRevSuccess.classList.add('hidden');
+
+            const submitBtn = document.getElementById('admin-rev-submit-btn');
+            submitBtn.disabled = true;
+            const originalText = submitBtn.textContent;
+            submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-xs">sync</span> Saving...';
+
+            const formData = new FormData(adminReviewForm);
+            
+            // Handle avatar URL preservation when editing
+            const avatarFile = document.getElementById('admin-rev-avatar').files[0];
+            if (!avatarFile && isRevEditing && currentRevAvatarUrl) {
+                formData.append('avatarUrl', currentRevAvatarUrl);
+            }
+
+            const url = isRevEditing ? `${API_BASE}/api/reviews/${revEditId}` : `${API_BASE}/api/reviews`;
+            const method = isRevEditing ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    adminRevSuccess.textContent = isRevEditing ? 'Review updated successfully!' : 'Review added successfully!';
+                    adminRevSuccess.classList.remove('hidden');
+                    cancelEditReview();
+                    loadReviews();
+                } else {
+                    adminRevError.textContent = data.error || 'Failed to submit review';
+                    adminRevError.classList.remove('hidden');
+                }
+            } catch (err) {
+                adminRevError.textContent = 'Server error. Failed to submit review.';
+                adminRevError.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        });
+    }
 
     // Run auth check on load
     checkAuth();

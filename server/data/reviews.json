@@ -1,0 +1,22 @@
+[
+  {
+    "id": "r1",
+    "name": "Rahul Verma",
+    "rating": 5,
+    "comment": "The anniversary website was the highlight of our 5th anniversary. My wife was in tears! The quality is just premium.",
+    "location": "Bengaluru",
+    "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuCv5hSotoC2bk7fYbnjPqkhFzxBERKm0GPfK9iiarIHfjOr6aWpmnoMAxm3WwHNw6Wrxxlfx-jxYffuybYm2mTd4ov_s0CshpOV8f8X6dQv3JXUCZrzJgffi3OTeVHshJ6BYqQIjj0FBKRv0b8KsKRLCcXm853_H8TDD8osNEdL21LPoTypkG9Kylj1BnDxQGA2cGm7tboXTR-mdwRgnEmi4NNBMI2jApBVD09SbyT9NZAhWoo9Bfu9gL-GwYxWSssNZFu_AAFEIw",
+    "status": "approved",
+    "createdAt": "2026-08-16T00:00:00.000Z"
+  },
+  {
+    "id": "r2",
+    "name": "Sneha Kapoor",
+    "rating": 5,
+    "comment": "Ordered a digital scrapbook for my best friend's wedding. The animations were so fluid. It felt like a real book!",
+    "location": "Mumbai",
+    "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuC9qmSupc_EC9P4oGYSY36BoTa2lfyTX6_sNnAsXpTBO6v1t0-mUVM_u8VARr08DBxgGR_CgmP4bT4d2EbUCB21oDTRULlFU_YTjAYVkuMVugWwU59bRNZwVSmcvmRJ4MYEv_bOiumhWPacksZqwrWI5qYvvxJBdlubwSkEHIGAIRW3GSqZ85X-hPbjoHEwteYbJiR0dNRokLQh65z-5AUZG0HcNbn11laiNGh1Z99RMzrY5G4ygcDCqkqTK-tKxiBUqOuXFXksRg",
+    "status": "approved",
+    "createdAt": "2026-08-16T00:01:00.000Z"
+  }
+]
