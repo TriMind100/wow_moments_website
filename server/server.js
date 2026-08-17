@@ -264,16 +264,36 @@ app.get('/api/status', async (req, res) => {
     });
 });
 
+// ─── Templates Cache ──────────────────────────────────────────────────────────
+let cachedTemplates = null;
+
+function invalidateTemplatesCache() {
+    cachedTemplates = null;
+    console.log('Templates cache invalidated.');
+}
+
 // ─── API: Templates ───────────────────────────────────────────────────────────
 app.get('/api/templates', async (req, res) => {
     try {
+        if (cachedTemplates) {
+            return res.json(cachedTemplates);
+        }
+
         let templates = [];
         const mongoOk = await connectDB();
         if (mongoOk && mongoose.connection.readyState === 1) {
             templates = await Template.find().sort({ createdAt: 1 }).lean();
         } else {
-            // Fallback to local file
-            templates = readTemplates();
+            // Fallback to local file (do not cache local file so DB retries can succeed)
+            const fallbackTemplates = readTemplates();
+            const optimized = fallbackTemplates.map(t => {
+                const temp = { ...t };
+                if (temp.image && temp.image.startsWith('data:')) {
+                    temp.image = `/api/templates/${temp.id}/image`;
+                }
+                return temp;
+            });
+            return res.json(optimized);
         }
 
         // Optimize templates by stripping base64 strings and serving URL instead
@@ -284,6 +304,9 @@ app.get('/api/templates', async (req, res) => {
             }
             return temp;
         });
+
+        // Save to cache
+        cachedTemplates = optimizedTemplates;
 
         res.json(optimizedTemplates);
     } catch (err) {
@@ -364,6 +387,7 @@ app.post('/api/templates', requireAuth, upload.single('imageFile'), async (req, 
         if (mongoOk && mongoose.connection.readyState === 1) {
             const newTemplate = new Template(newTemplateData);
             await newTemplate.save();
+            invalidateTemplatesCache();
             return res.status(201).json(newTemplate);
         }
 
@@ -374,6 +398,7 @@ app.post('/api/templates', requireAuth, upload.single('imageFile'), async (req, 
         const templates = readTemplates();
         templates.push(newTemplateData);
         writeTemplates(templates);
+        invalidateTemplatesCache();
         res.status(201).json(newTemplateData);
     } catch (err) {
         console.error('Error adding template:', err);
@@ -433,6 +458,7 @@ app.put('/api/templates/:id', requireAuth, upload.single('imageFile'), async (re
             const updatedTemplate = await Template.findOneAndUpdate(
                 { id }, { $set: updatedData }, { new: true }
             );
+            invalidateTemplatesCache();
             return res.json(updatedTemplate);
         }
 
@@ -444,6 +470,7 @@ app.put('/api/templates/:id', requireAuth, upload.single('imageFile'), async (re
         const index = templates.findIndex(t => t.id === id);
         templates[index] = { ...templates[index], ...updatedData };
         writeTemplates(templates);
+        invalidateTemplatesCache();
         res.json(templates[index]);
     } catch (err) {
         console.error('Error updating template:', err);
@@ -469,6 +496,7 @@ app.delete('/api/templates/:id', requireAuth, async (req, res) => {
 
         if (useMongoNow) {
             await Template.findOneAndDelete({ id });
+            invalidateTemplatesCache();
             return res.json({ success: true, message: 'Template deleted' });
         }
 
@@ -480,6 +508,7 @@ app.delete('/api/templates/:id', requireAuth, async (req, res) => {
         const index = templates.findIndex(t => t.id === id);
         templates.splice(index, 1);
         writeTemplates(templates);
+        invalidateTemplatesCache();
         res.json({ success: true, message: 'Template deleted' });
     } catch (err) {
         console.error('Error deleting template:', err);
@@ -526,6 +555,7 @@ app.post('/api/sales/run', requireAuth, async (req, res) => {
             });
             await Template.bulkWrite(bulkOps);
             const updated = await Template.find({ id: { $in: templateIds } });
+            invalidateTemplatesCache();
             return res.json({ success: true, updated });
         }
 
@@ -545,6 +575,7 @@ app.post('/api/sales/run', requireAuth, async (req, res) => {
             }
         });
         writeTemplates(templates);
+        invalidateTemplatesCache();
         res.json({ success: true, updated });
     } catch (err) {
         console.error('Error running sale:', err);
@@ -580,6 +611,7 @@ app.delete('/api/sales/clear', requireAuth, async (req, res) => {
                 }
             }));
             if (bulkOps.length > 0) await Template.bulkWrite(bulkOps);
+            invalidateTemplatesCache();
             return res.json({ success: true, clearedCount: bulkOps.length });
         }
 
@@ -597,6 +629,7 @@ app.delete('/api/sales/clear', requireAuth, async (req, res) => {
             }
         });
         writeTemplates(templates);
+        invalidateTemplatesCache();
         res.json({ success: true, clearedCount });
     } catch (err) {
         console.error('Error clearing sale:', err);

@@ -183,13 +183,38 @@ void main() {
             });
         }
 
+        let currentCategory = 'all';
+
         // Fetch templates from API
         async function fetchTemplates() {
             try {
+                // Show buffering animation in grid
+                grid.innerHTML = `
+                    <div class="col-span-full flex flex-col items-center justify-center py-20 gap-4">
+                        <div class="relative w-16 h-16">
+                            <!-- Spinner outer ring -->
+                            <div class="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
+                            <!-- Spinner spinning arc -->
+                            <div class="absolute inset-0 border-4 border-transparent border-t-primary rounded-full animate-spin"></div>
+                            <!-- Inner beating heart icon -->
+                            <div class="absolute inset-0 flex items-center justify-center text-primary animate-pulse">
+                                <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                            </div>
+                        </div>
+                        <p class="text-on-surface-variant font-semibold tracking-wide animate-pulse brand-font text-lg">Unwrapping special templates...</p>
+                    </div>
+                `;
                 const response = await fetch(`${API_BASE}/api/templates`);
                 if (!response.ok) throw new Error('Network response was not ok');
                 templates = await response.json();
-                renderTemplates(templates);
+                
+                // Render templates based on selected category
+                if (currentCategory === 'all') {
+                    renderTemplates(templates);
+                } else {
+                    const filtered = templates.filter(t => t.categories && t.categories.includes(currentCategory));
+                    renderTemplates(filtered);
+                }
             } catch (err) {
                 console.error('Error loading templates:', err);
                 grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500 font-medium">Failed to load templates. Please try again later.</div>';
@@ -204,6 +229,7 @@ void main() {
         categoryButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const category = btn.getAttribute('data-category');
+                currentCategory = category;
 
                 // Toggle active style classes
                 categoryButtons.forEach(b => {
@@ -212,6 +238,26 @@ void main() {
                 });
                 btn.classList.add('text-primary', 'bg-primary-container/20', 'border-primary/30');
                 btn.classList.remove('text-on-surface-variant');
+
+                // If templates are still loading, show buffering animation and wait
+                if (!templates || templates.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-span-full flex flex-col items-center justify-center py-20 gap-4">
+                            <div class="relative w-16 h-16">
+                                <!-- Spinner outer ring -->
+                                <div class="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
+                                <!-- Spinner spinning arc -->
+                                <div class="absolute inset-0 border-4 border-transparent border-t-primary rounded-full animate-spin"></div>
+                                <!-- Inner beating heart icon -->
+                                <div class="absolute inset-0 flex items-center justify-center text-primary animate-pulse">
+                                    <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                                </div>
+                            </div>
+                            <p class="text-on-surface-variant font-semibold tracking-wide animate-pulse brand-font text-lg">Unwrapping special templates...</p>
+                        </div>
+                    `;
+                    return;
+                }
 
                 // Filter templates
                 let filtered;
@@ -566,5 +612,108 @@ void main() {
 
         // Load reviews initially
         fetchReviews();
+
+        // ─── Active Navigation Styling & Scrollspy ────────────────────────────────
+        const desktopNavLinks = document.querySelectorAll('#top-nav div.hidden.md\\:flex a');
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+        const bottomNavLinks = document.querySelectorAll('nav.fixed.bottom-0 a');
+
+        const sections = [
+            { id: 'home', element: document.querySelector('section.hero-radial-glow') },
+            { id: 'templates', element: document.getElementById('templates') },
+            { id: 'how-it-works', element: document.getElementById('how-it-works') },
+            { id: 'reviews', element: document.getElementById('reviews') },
+            { id: 'faq', element: document.getElementById('faq') }
+        ];
+
+        function setActiveLink(sectionId) {
+            // Desktop Navbar Links
+            desktopNavLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                const isHome = href === '#' || href === '';
+                if ((sectionId === 'home' && isHome) || href === `#${sectionId}`) {
+                    link.className = "text-[#b90a5a] font-bold hover:opacity-80 transition-opacity";
+                } else {
+                    link.className = "text-on-surface-variant font-medium hover:text-[#b90a5a] transition-colors";
+                }
+            });
+
+            // Mobile Overlay Menu Links
+            mobileNavLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                const isHome = href === '#' || href === '';
+                if ((sectionId === 'home' && isHome) || href === `#${sectionId}`) {
+                    link.className = "mobile-nav-link text-2xl font-bold text-[#b90a5a] hover:opacity-80 transition-all active:scale-95";
+                } else {
+                    link.className = "mobile-nav-link text-2xl font-bold text-[#594046] hover:text-[#b90a5a] transition-colors active:scale-95";
+                }
+            });
+
+            // Bottom Nav Bar Links
+            bottomNavLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                const isHome = href === '#' || href === '';
+                if (href === 'https://wa.me/918609539322') return;
+
+                if ((sectionId === 'home' && isHome) || href === `#${sectionId}`) {
+                    link.className = "flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 transition-all duration-300";
+                } else {
+                    link.className = "flex flex-col items-center justify-center text-on-surface-variant transition-all duration-300";
+                }
+            });
+        }
+
+        // Setup click listeners
+        desktopNavLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                const href = link.getAttribute('href');
+                const sectionId = href === '#' || href === '' ? 'home' : href.replace('#', '');
+                setActiveLink(sectionId);
+            });
+        });
+
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                const href = link.getAttribute('href');
+                const sectionId = href === '#' || href === '' ? 'home' : href.replace('#', '');
+                setActiveLink(sectionId);
+                const mobileMenu = document.getElementById('mobile-menu');
+                if (mobileMenu) {
+                    mobileMenu.classList.add('translate-x-full');
+                }
+            });
+        });
+
+        bottomNavLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                const href = link.getAttribute('href');
+                if (href === 'https://wa.me/918609539322') return;
+                const sectionId = href === '#' || href === '' ? 'home' : href.replace('#', '');
+                setActiveLink(sectionId);
+            });
+        });
+
+        // Setup scrollspy listener
+        window.addEventListener('scroll', () => {
+            let currentSection = 'home';
+            const scrollPos = window.scrollY + 120; // Offset for navbar
+
+            sections.forEach(sec => {
+                if (sec.element) {
+                    const top = sec.element.offsetTop;
+                    const height = sec.element.offsetHeight;
+                    if (scrollPos >= top && scrollPos < top + height) {
+                        currentSection = sec.id;
+                    }
+                }
+            });
+
+            // Handle bottom of page selection
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 50) {
+                currentSection = 'faq';
+            }
+
+            setActiveLink(currentSection);
+        });
     })();
 });
