@@ -478,6 +478,7 @@ void main() {
                 const tag = card.querySelector('span[class*="rounded-full"]');
                 const progressBar = card.querySelector('.step-progress-bar');
                 const progressFill = card.querySelector('.step-progress-fill');
+                const mobilePreview = card.querySelector('.mobile-step-preview');
 
                 if (cardStep === stepNum) {
                     card.classList.remove('border-transparent', 'bg-white/60');
@@ -494,6 +495,9 @@ void main() {
                     if (progressFill) {
                         progressFill.style.width = '100%';
                     }
+                    if (mobilePreview) {
+                        mobilePreview.classList.remove('hidden');
+                    }
                 } else {
                     card.classList.remove('border-primary', 'bg-white/90', 'shadow-[0_10px_30px_rgba(185,10,90,0.1)]');
                     card.classList.add('border-transparent', 'bg-white/60');
@@ -508,6 +512,9 @@ void main() {
                     }
                     if (progressFill) {
                         progressFill.style.width = '0%';
+                    }
+                    if (mobilePreview) {
+                        mobilePreview.classList.add('hidden');
                     }
                 }
             });

@@ -1119,12 +1119,8 @@
         <div class="absolute bottom-10 right-0 w-96 h-96 bg-secondary-container/20 rounded-full blur-[120px] pointer-events-none"></div>
 
         <div class="max-w-container-max mx-auto relative z-10">
-            <!-- Section Header -->
+            <!-- Section Header (Removed 4-step process text) -->
             <div class="text-center max-w-3xl mx-auto mb-6 md:mb-8">
-                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-extrabold uppercase tracking-widest mb-3">
-                    <span class="material-symbols-outlined text-sm animate-pulse">auto_awesome</span>
-                    Simple 4-Step Process
-                </div>
                 <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-3 brand-font text-gray-900">
                     A Seamless Journey <span class="text-primary italic">From Idea to Surprise</span>
                 </h2>
@@ -1155,6 +1151,37 @@
                                 </p>
                             </div>
                         </div>
+
+                        <!-- Mobile Inline Preview 1 (Shown under step in mobile view) -->
+                        <div class="mobile-step-preview block lg:hidden mt-3.5 pt-3.5 border-t border-pink-100/90 transition-all duration-300">
+                            <div class="w-full max-w-sm mx-auto bg-white rounded-2xl p-3 shadow-md border border-pink-100 space-y-2.5">
+                                <div class="flex items-center justify-between border-b border-gray-100 pb-1.5">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-red-400"></span>
+                                        <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+                                        <span class="w-2 h-2 rounded-full bg-green-400"></span>
+                                    </div>
+                                    <span class="text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">Real Template Preview</span>
+                                </div>
+                                <div class="relative rounded-xl overflow-hidden shadow-2xs border border-pink-100">
+                                    <img src="assets/love_story_preview.png" alt="A Love That Defies Time" class="w-full h-36 object-cover object-top rounded-xl">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-2.5">
+                                        <div class="text-white">
+                                            <span class="text-[8px] font-extrabold bg-amber-500 text-white px-1.5 py-0.5 rounded uppercase tracking-wider">Trending</span>
+                                            <p class="text-xs font-bold leading-tight mt-0.5">A Love That Defies Time!</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between pt-0.5">
+                                    <div class="flex gap-1 text-[9px]">
+                                        <span class="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded font-semibold">🎵 Love Song</span>
+                                        <span class="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded font-semibold">💌 Secret Card</span>
+                                    </div>
+                                    <span class="text-xs font-extrabold text-primary">₹379</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Step Progress Indicator -->
                         <div class="step-progress-bar absolute bottom-0 left-0 right-0 h-1 bg-primary/20 overflow-hidden">
                             <div class="step-progress-fill h-full bg-primary transition-all duration-300 w-full"></div>
@@ -1177,6 +1204,37 @@
                                 </p>
                             </div>
                         </div>
+
+                        <!-- Mobile Inline Preview 2 (Shown under step in mobile view) -->
+                        <div class="mobile-step-preview hidden lg:hidden mt-3.5 pt-3.5 border-t border-pink-100/90 transition-all duration-300">
+                            <div class="w-full max-w-sm mx-auto bg-[#e5ddd5] rounded-2xl overflow-hidden shadow-md border border-gray-200 text-xs">
+                                <div class="bg-[#075e54] text-white p-2.5 flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-7 h-7 rounded-full bg-[#25D366] text-white flex items-center justify-center font-bold text-xs shadow-xs">WM</div>
+                                        <div>
+                                            <p class="text-[11px] font-bold flex items-center gap-1">Wow Moments Support <span class="material-symbols-outlined text-emerald-300 text-xs">verified</span></p>
+                                            <p class="text-[8px] text-emerald-200">Online • Typically replies in 1m</p>
+                                        </div>
+                                    </div>
+                                    <span class="material-symbols-outlined text-sm">more_vert</span>
+                                </div>
+                                <div class="p-2.5 space-y-2 bg-[#efeae2]">
+                                    <div class="flex justify-end">
+                                        <div class="bg-[#dcf8c6] text-gray-800 p-2 rounded-xl rounded-tr-xs shadow-2xs max-w-[85%] text-[10px] leading-relaxed">
+                                            Hi! I'd like to order <strong>"A Love That Defies Time!"</strong> for our anniversary 💖
+                                            <span class="block text-[7px] text-gray-500 text-right mt-0.5">10:30 AM ✓✓</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-start">
+                                        <div class="bg-white text-gray-800 p-2 rounded-xl rounded-tl-xs shadow-2xs max-w-[88%] text-[10px] leading-relaxed">
+                                            We'd love to make this unforgettable! ✨ Please send your photos and favorite song!
+                                            <span class="block text-[7px] text-gray-400 text-right mt-0.5">10:31 AM</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="step-progress-bar absolute bottom-0 left-0 right-0 h-1 bg-primary/20 overflow-hidden hidden">
                             <div class="step-progress-fill h-full bg-primary transition-all duration-300 w-0"></div>
                         </div>
@@ -1198,6 +1256,38 @@
                                 </p>
                             </div>
                         </div>
+
+                        <!-- Mobile Inline Preview 3 (Shown under step in mobile view) -->
+                        <div class="mobile-step-preview hidden lg:hidden mt-3.5 pt-3.5 border-t border-pink-100/90 transition-all duration-300">
+                            <div class="w-full max-w-sm mx-auto bg-white rounded-2xl p-3 shadow-md border border-pink-100 space-y-2.5">
+                                <div class="p-2 rounded-xl bg-pink-50/60 border border-pink-100 flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center text-pink-400 animate-spin flex-shrink-0" style="animation-duration: 4s;">
+                                        <span class="material-symbols-outlined text-xs">music_note</span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-xs font-bold text-gray-800 truncate">Perfect — Ed Sheeran</p>
+                                        <p class="text-[9px] text-gray-500">Custom background music</p>
+                                    </div>
+                                    <span class="material-symbols-outlined text-primary text-sm">graphic_eq</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-1.5">
+                                    <div class="relative rounded-lg overflow-hidden h-14 border border-pink-200 shadow-2xs">
+                                        <img src="assets/love_story2_preview.png" alt="Scrapbook Memory" class="w-full h-full object-cover">
+                                    </div>
+                                    <div class="relative rounded-lg overflow-hidden h-14 border border-pink-200 shadow-2xs">
+                                        <img src="assets/love_story5_preview.png" alt="Birthday Memory" class="w-full h-full object-cover">
+                                    </div>
+                                    <div class="relative rounded-lg overflow-hidden h-14 border border-pink-200 shadow-2xs">
+                                        <img src="assets/fathers_day_preview.png" alt="Family Memory" class="w-full h-full object-cover">
+                                    </div>
+                                </div>
+                                <div class="p-1.5 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-between text-[10px] text-emerald-800 font-semibold">
+                                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs text-emerald-600">mail</span> Secret Love Letter</span>
+                                    <span class="text-[8px] bg-emerald-200/60 px-1.5 py-0.5 rounded font-bold">Encrypted</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="step-progress-bar absolute bottom-0 left-0 right-0 h-1 bg-primary/20 overflow-hidden hidden">
                             <div class="step-progress-fill h-full bg-primary transition-all duration-300 w-0"></div>
                         </div>
@@ -1219,6 +1309,27 @@
                                 </p>
                             </div>
                         </div>
+
+                        <!-- Mobile Inline Preview 4 (Shown under step in mobile view) -->
+                        <div class="mobile-step-preview hidden lg:hidden mt-3.5 pt-3.5 border-t border-pink-100/90 transition-all duration-300">
+                            <div class="w-full max-w-sm mx-auto bg-gradient-to-br from-pink-500 via-[#b90a5a] to-[#80053a] text-white rounded-2xl p-3.5 shadow-lg space-y-2.5">
+                                <div class="text-center">
+                                    <span class="inline-block px-2 py-0.5 rounded-full bg-white/20 text-[9px] font-bold uppercase tracking-wider text-pink-100 mb-1">🎉 Live Link Ready</span>
+                                    <h4 class="text-sm font-bold brand-font">Surprise Unlocked! ❤️</h4>
+                                </div>
+                                <div class="rounded-xl overflow-hidden border border-white/30 bg-white">
+                                    <img src="assets/love_story_mockup.png" alt="Live Website Mockup" class="w-full h-24 object-cover object-top" onerror="this.src='assets/love_story_preview.png'">
+                                </div>
+                                <div class="bg-white text-gray-900 p-2 rounded-xl shadow-xs flex items-center justify-between gap-1.5">
+                                    <div class="flex items-center gap-1 min-w-0">
+                                        <span class="material-symbols-outlined text-primary text-sm">link</span>
+                                        <span class="text-[11px] font-bold truncate text-primary">wowmoments1.kolkode.in</span>
+                                    </div>
+                                    <a href="https://wowmoments1.kolkode.in/" target="_blank" rel="noopener noreferrer" class="text-[9px] font-extrabold bg-primary text-white px-2 py-0.5 rounded-md shadow-2xs flex-shrink-0">Visit Demo</a>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="step-progress-bar absolute bottom-0 left-0 right-0 h-1 bg-primary/20 overflow-hidden hidden">
                             <div class="step-progress-fill h-full bg-primary transition-all duration-300 w-0"></div>
                         </div>
@@ -1226,16 +1337,10 @@
 
                 </div>
 
-                <!-- Right: Interactive Dynamic Visual Stage (lg:col-span-6) -->
-                <div class="lg:col-span-6 relative">
+                <!-- Right: Interactive Dynamic Visual Stage (Desktop only - lg:block) -->
+                <div class="hidden lg:block lg:col-span-6 relative">
                     <!-- Glassmorphism Stage Container -->
                     <div class="glass-card rounded-[2.5rem] sm:rounded-[3rem] p-6 sm:p-8 md:p-10 border-2 border-white/60 shadow-2xl relative overflow-hidden bg-gradient-to-b from-white/90 via-white/80 to-pink-50/50 backdrop-blur-xl">
-                        
-                        <!-- Floating Micro-Badges -->
-                        <div class="absolute top-4 left-4 z-20 flex items-center gap-1.5 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full shadow-xs border border-pink-100 text-[11px] font-bold text-gray-800">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                            <span>⚡ Live Interactive Preview</span>
-                        </div>
                         
                         <div class="absolute top-4 right-4 z-20 flex items-center gap-1 px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-full shadow-xs border border-pink-100 text-[10px] font-extrabold text-primary">
                             <span class="material-symbols-outlined text-xs">lock</span> Private Link
