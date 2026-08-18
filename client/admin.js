@@ -1078,10 +1078,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const formData = new FormData(adminReviewForm);
             
-            // Handle avatar URL preservation when editing
             const avatarFile = document.getElementById('admin-rev-avatar').files[0];
-            if (!avatarFile && isRevEditing && currentRevAvatarUrl) {
-                formData.append('avatarUrl', currentRevAvatarUrl);
+            if (!avatarFile || avatarFile.size === 0) {
+                formData.delete('avatarFile'); // Server retains existing avatar from DB automatically
             }
 
             const url = isRevEditing ? `${API_BASE}/api/reviews/${revEditId}/edit` : `${API_BASE}/api/reviews`;

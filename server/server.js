@@ -82,8 +82,8 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 app.options('*', cors({ origin: true, credentials: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(cookieParser());
 
 // ─── Static Files & Page Routes ────────────────────────────────────────────────
@@ -105,7 +105,15 @@ app.get('/admin.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/admin.html'));
 });
 
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/admin.html'));
+});
+
 app.get('/write-review.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/write-review.html'));
+});
+
+app.get('/write-review', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/write-review.html'));
 });
 
@@ -125,7 +133,10 @@ app.get('/sitemap.xml', (req, res) => {
 // between cold starts, making stored asset/ paths point to missing files).
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024 } // 5 MB max
+    limits: {
+        fileSize: 15 * 1024 * 1024,  // 15 MB file max
+        fieldSize: 25 * 1024 * 1024  // 25 MB field max
+    }
 });
 
 // Helper: convert an uploaded multer file (in memory) to a Base64 data URL
