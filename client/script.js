@@ -185,25 +185,43 @@ void main() {
 
         let currentCategory = 'all';
 
+        function renderSkeletonLoading(count = 3) {
+            if (!grid) return;
+            let skeletonHtml = '';
+            for (let i = 0; i < count; i++) {
+                const hiddenOnSmall = i >= 2 ? 'hidden lg:flex' : '';
+                skeletonHtml += `
+                    <div class="template-skeleton skeleton-card rounded-[2rem] p-2 flex flex-col group overflow-hidden ${hiddenOnSmall}">
+                        <div class="relative overflow-hidden rounded-[1.8rem] h-72 skeleton-shimmer flex items-center justify-center">
+                            <div class="flex items-center gap-2 px-3.5 py-1.5 bg-white/85 backdrop-blur-md rounded-full shadow-xs border border-white/90 buffering-pulse">
+                                <span class="material-symbols-outlined text-primary text-base animate-spin">sync</span>
+                                <span class="text-[11px] font-extrabold text-primary brand-font uppercase tracking-wider">Loading templates...</span>
+                            </div>
+                        </div>
+                        <div class="p-6 flex-1 flex flex-col justify-between gap-4">
+                            <div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <div class="h-6 w-36 rounded-xl skeleton-shimmer"></div>
+                                    <div class="h-6 w-14 rounded-xl skeleton-shimmer"></div>
+                                </div>
+                                <div class="h-3.5 w-full rounded-lg skeleton-shimmer mb-2"></div>
+                                <div class="h-3.5 w-4/5 rounded-lg skeleton-shimmer"></div>
+                            </div>
+                            <div class="flex gap-3 mt-4">
+                                <div class="h-12 flex-1 rounded-2xl skeleton-shimmer"></div>
+                                <div class="h-12 flex-1 rounded-2xl skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            grid.innerHTML = skeletonHtml;
+        }
+
         // Fetch templates from API
         async function fetchTemplates() {
             try {
-                // Show buffering animation in grid
-                grid.innerHTML = `
-                    <div class="col-span-full flex flex-col items-center justify-center py-20 gap-4">
-                        <div class="relative w-16 h-16">
-                            <!-- Spinner outer ring -->
-                            <div class="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
-                            <!-- Spinner spinning arc -->
-                            <div class="absolute inset-0 border-4 border-transparent border-t-primary rounded-full animate-spin"></div>
-                            <!-- Inner beating heart icon -->
-                            <div class="absolute inset-0 flex items-center justify-center text-primary animate-pulse">
-                                <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">favorite</span>
-                            </div>
-                        </div>
-                        <p class="text-on-surface-variant font-semibold tracking-wide animate-pulse brand-font text-lg">Unwrapping special templates...</p>
-                    </div>
-                `;
+                renderSkeletonLoading(3);
                 const response = await fetch(`${API_BASE}/api/templates`);
                 if (!response.ok) throw new Error('Network response was not ok');
                 templates = await response.json();
@@ -241,21 +259,7 @@ void main() {
 
                 // If templates are still loading, show buffering animation and wait
                 if (!templates || templates.length === 0) {
-                    grid.innerHTML = `
-                        <div class="col-span-full flex flex-col items-center justify-center py-20 gap-4">
-                            <div class="relative w-16 h-16">
-                                <!-- Spinner outer ring -->
-                                <div class="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
-                                <!-- Spinner spinning arc -->
-                                <div class="absolute inset-0 border-4 border-transparent border-t-primary rounded-full animate-spin"></div>
-                                <!-- Inner beating heart icon -->
-                                <div class="absolute inset-0 flex items-center justify-center text-primary animate-pulse">
-                                    <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">favorite</span>
-                                </div>
-                            </div>
-                            <p class="text-on-surface-variant font-semibold tracking-wide animate-pulse brand-font text-lg">Unwrapping special templates...</p>
-                        </div>
-                    `;
+                    renderSkeletonLoading(3);
                     return;
                 }
 

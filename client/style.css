@@ -294,3 +294,62 @@ webgl-shader {
     transform: translateY(0);
 }
 
+/* ═════════════════════════════════════════════════════════════════
+   TEMPLATE BUFFERING & SKELETON SHIMMER (Mobile & Desktop)
+   ═════════════════════════════════════════════════════════════════ */
+@keyframes shimmerWave {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(90deg, #fceef3 0%, #fdf5f8 50%, #fceef3 100%);
+}
+
+.skeleton-shimmer::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.65) 45%,
+        rgba(255, 255, 255, 0.85) 60%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    animation: shimmerWave 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    content: '';
+}
+
+.skeleton-card {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 10px 30px rgba(185, 10, 90, 0.04);
+}
+
+@keyframes pulseGlow {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(185, 10, 90, 0.15);
+    }
+    50% {
+        transform: scale(1.03);
+        box-shadow: 0 8px 25px rgba(185, 10, 90, 0.28);
+    }
+}
+
+.buffering-pulse {
+    animation: pulseGlow 1.8s ease-in-out infinite;
+}
+
