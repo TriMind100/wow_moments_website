@@ -78,7 +78,7 @@ mongoose.connection.on('error', (err) => {
 app.use(cors({
     origin: true,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 app.options('*', cors({ origin: true, credentials: true }));
@@ -1056,10 +1056,12 @@ app.put('/api/reviews/:id', requireAuth, upload.single('avatarFile'), async (req
         const useMongoNow = mongoOk && mongoose.connection.readyState === 1;
 
         let existingReview;
+        const reviewQuery = (useMongoNow && mongoose.Types.ObjectId.isValid(id)) ? { $or: [{ id }, { _id: id }] } : { id };
+
         if (useMongoNow) {
-            existingReview = await Review.findOne({ id });
+            existingReview = await Review.findOne(reviewQuery);
         } else {
-            existingReview = readReviews().find(r => r.id === id);
+            existingReview = readReviews().find(r => r.id === id || r._id === id);
         }
 
         if (!existingReview) return res.status(404).json({ error: 'Review not found' });
@@ -1082,7 +1084,7 @@ app.put('/api/reviews/:id', requireAuth, upload.single('avatarFile'), async (req
 
         if (useMongoNow) {
             const updatedReview = await Review.findOneAndUpdate(
-                { id }, { $set: updatedData }, { new: true }
+                reviewQuery, { $set: updatedData }, { new: true }
             );
             return res.json(updatedReview);
         }
@@ -1092,7 +1094,7 @@ app.put('/api/reviews/:id', requireAuth, upload.single('avatarFile'), async (req
         }
 
         const reviews = readReviews();
-        const index = reviews.findIndex(r => r.id === id);
+        const index = reviews.findIndex(r => r.id === id || r._id === id);
         reviews[index] = { ...reviews[index], ...updatedData };
         writeReviews(reviews);
         res.json(reviews[index]);
@@ -1102,11 +1104,11 @@ app.put('/api/reviews/:id', requireAuth, upload.single('avatarFile'), async (req
     }
 });
 
-// PATCH /api/reviews/:id/status - quick approve/unapprove review (admin only)
-app.patch('/api/reviews/:id/status', requireAuth, async (req, res) => {
+// Handler for status update (supports POST, PATCH, and PUT)
+async function handleReviewStatusUpdate(req, res) {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const status = req.body.status || (req.path.endsWith('/approve') ? 'approved' : null);
 
         if (!status || !['approved', 'pending'].includes(status)) {
             return res.status(400).json({ error: 'Status must be "approved" or "pending".' });
@@ -1114,10 +1116,11 @@ app.patch('/api/reviews/:id/status', requireAuth, async (req, res) => {
 
         const mongoOk = await connectDB();
         const useMongoNow = mongoOk && mongoose.connection.readyState === 1;
+        const reviewQuery = (useMongoNow && mongoose.Types.ObjectId.isValid(id)) ? { $or: [{ id }, { _id: id }] } : { id };
 
         if (useMongoNow) {
             const updatedReview = await Review.findOneAndUpdate(
-                { id },
+                reviewQuery,
                 { $set: { status } },
                 { new: true }
             );
@@ -1130,7 +1133,7 @@ app.patch('/api/reviews/:id/status', requireAuth, async (req, res) => {
         }
 
         const reviews = readReviews();
-        const index = reviews.findIndex(r => r.id === id);
+        const index = reviews.findIndex(r => r.id === id || r._id === id);
         if (index === -1) return res.status(404).json({ error: 'Review not found' });
 
         reviews[index].status = status;
@@ -1140,7 +1143,11 @@ app.patch('/api/reviews/:id/status', requireAuth, async (req, res) => {
         console.error('Error updating review status:', err);
         res.status(500).json({ error: 'Server error updating review status: ' + err.message });
     }
-});
+}
+
+app.patch('/api/reviews/:id/status', requireAuth, handleReviewStatusUpdate);
+app.post('/api/reviews/:id/status', requireAuth, handleReviewStatusUpdate);
+app.post('/api/reviews/:id/approve', requireAuth, handleReviewStatusUpdate);
 
 // DELETE /api/reviews/:id - delete a review (admin only)
 app.delete('/api/reviews/:id', requireAuth, async (req, res) => {

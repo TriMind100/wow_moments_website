@@ -990,41 +990,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function updateReviewStatus(review, newStatus) {
         try {
-            // First attempt quick PATCH /api/reviews/:id/status
             const res = await authFetch(`${API_BASE}/api/reviews/${review.id}/status`, {
-                method: 'PATCH',
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
             });
 
-            if (res.ok) {
-                await loadReviews();
-                return;
-            }
-
-            // Fallback to PUT
-            const formData = new FormData();
-            formData.append('name', review.name);
-            formData.append('rating', review.rating);
-            formData.append('comment', review.comment);
-            formData.append('location', review.location || '');
-            if (review.avatar) formData.append('avatarUrl', review.avatar);
-            formData.append('status', newStatus);
-
-            const putRes = await authFetch(`${API_BASE}/api/reviews/${review.id}`, {
-                method: 'PUT',
-                body: formData
-            });
-
-            if (putRes.ok) {
+            const data = await res.json();
+            if (res.ok && data.success) {
                 await loadReviews();
             } else {
-                const err = await putRes.json();
-                alert(err.error || 'Failed to update review status');
+                alert(data.error || 'Failed to update review status.');
+                await loadReviews();
             }
         } catch (err) {
             console.error('Error updating review status:', err);
-            alert('Server error updating review status.');
+            alert('Server error updating review status. Please try again.');
+            await loadReviews();
         }
     }
 
