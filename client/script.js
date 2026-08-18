@@ -119,6 +119,7 @@ void main() {
     const grid = document.getElementById('templates-grid');
     if (grid) {
         let templates = [];
+        const TEMPLATES_CACHE_KEY = 'wow_templates_cache_v3';
 
         function generateWALink(name, price) {
             const baseUrl = "https://wa.me/918609539322";
@@ -129,7 +130,7 @@ void main() {
         function renderTemplates(filteredList) {
             if (!grid) return;
             grid.innerHTML = '';
-            filteredList.forEach(t => {
+            filteredList.forEach((t, idx) => {
                 const card = document.createElement('div');
                 card.className = "template-card glass-card review-card rounded-[2rem] overflow-hidden flex flex-col p-2 group";
                 
@@ -151,9 +152,14 @@ void main() {
                 }
 
                 card.innerHTML = `
-                    <div class="relative overflow-hidden rounded-[1.8rem]">
-                        <img class="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-700" src="${imageUrl}" alt="${t.name}">
-                        ${t.tag ? `<div class="absolute top-4 left-4 ${t.tagColor} text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">${t.tag}</div>` : ''}
+                    <div class="relative overflow-hidden rounded-[1.8rem] bg-gray-100">
+                        <img class="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-700" 
+                             src="${imageUrl}" 
+                             alt="${t.name}" 
+                             loading="${idx < 2 ? 'eager' : 'lazy'}" 
+                             decoding="async"
+                             ${idx === 0 ? 'fetchpriority="high"' : ''}>
+                        ${t.tag ? `<div class="absolute top-4 left-4 ${t.tagColor} text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">${t.tag}</div>` : ''}
                     </div>
                     <div class="p-6 flex-1 flex flex-col justify-between">
                         <div>
@@ -165,15 +171,15 @@ void main() {
                         </div>
                         ${t.preview ? `
                          <div class="flex gap-3">
-                            <a href="${t.preview}" target="_blank" class="flex-1 py-3 md:py-4 rounded-2xl border-2 border-primary text-primary hover:bg-primary/5 font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 duration-200 text-xs sm:text-sm">
+                            <a href="${t.preview}" target="_blank" rel="noopener noreferrer" class="flex-1 py-3 md:py-4 rounded-2xl border-2 border-primary text-primary hover:bg-primary/5 font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 duration-200 text-xs sm:text-sm">
                                 <span class="material-symbols-outlined text-base sm:text-lg">visibility</span> Preview
                             </a>
-                            <a href="${generateWALink(t.name, t.price)}" class="btn-gradient flex-1 py-3 md:py-4 rounded-2xl text-white font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 duration-200 text-xs sm:text-sm">
+                            <a href="${generateWALink(t.name, t.price)}" target="_blank" rel="noopener noreferrer" class="btn-gradient flex-1 py-3 md:py-4 rounded-2xl text-white font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 duration-200 text-xs sm:text-sm">
                                 <span class="material-symbols-outlined text-base sm:text-lg">chat</span> Order Now
                             </a>
                         </div>
                         ` : `
-                        <a href="${generateWALink(t.name, t.price)}" class="btn-gradient w-full py-3 md:py-4 rounded-2xl text-white font-bold flex items-center justify-center gap-2 transition-all active:scale-95 duration-200 text-xs sm:text-sm">
+                        <a href="${generateWALink(t.name, t.price)}" target="_blank" rel="noopener noreferrer" class="btn-gradient w-full py-3 md:py-4 rounded-2xl text-white font-bold flex items-center justify-center gap-2 transition-all active:scale-95 duration-200 text-xs sm:text-sm">
                             <span class="material-symbols-outlined text-base sm:text-lg">chat</span> Order Now
                         </a>
                         `}
@@ -218,24 +224,48 @@ void main() {
             grid.innerHTML = skeletonHtml;
         }
 
-        // Fetch templates from API
+        // Instant local cache display for 0ms page load
+        let cachedTemplatesRaw = localStorage.getItem(TEMPLATES_CACHE_KEY);
+        if (cachedTemplatesRaw) {
+            try {
+                const parsed = JSON.parse(cachedTemplatesRaw);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    templates = parsed;
+                    renderTemplates(templates);
+                }
+            } catch (e) {
+                renderSkeletonLoading(3);
+            }
+        }
+
+        // Fetch fresh templates from API (stale-while-revalidate)
         async function fetchTemplates() {
             try {
-                renderSkeletonLoading(3);
+                if (!templates || templates.length === 0) {
+                    renderSkeletonLoading(3);
+                }
                 const response = await fetch(`${API_BASE}/api/templates`);
                 if (!response.ok) throw new Error('Network response was not ok');
-                templates = await response.json();
+                const freshTemplates = await response.json();
                 
-                // Render templates based on selected category
-                if (currentCategory === 'all') {
-                    renderTemplates(templates);
-                } else {
-                    const filtered = templates.filter(t => t.categories && t.categories.includes(currentCategory));
-                    renderTemplates(filtered);
+                const freshStr = JSON.stringify(freshTemplates);
+                if (freshStr !== cachedTemplatesRaw || !templates || templates.length === 0) {
+                    templates = freshTemplates;
+                    cachedTemplatesRaw = freshStr;
+                    localStorage.setItem(TEMPLATES_CACHE_KEY, freshStr);
+                    
+                    if (currentCategory === 'all') {
+                        renderTemplates(templates);
+                    } else {
+                        const filtered = templates.filter(t => t.categories && t.categories.includes(currentCategory));
+                        renderTemplates(filtered);
+                    }
                 }
             } catch (err) {
                 console.error('Error loading templates:', err);
-                grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500 font-medium">Failed to load templates. Please try again later.</div>';
+                if (!templates || templates.length === 0) {
+                    grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500 font-medium">Failed to load templates. Please try again later.</div>';
+                }
             }
         }
 
@@ -510,15 +540,33 @@ void main() {
             updateArrows();
         }
 
-        // Fetch approved reviews
+        const REVIEWS_CACHE_KEY = 'wow_reviews_cache_v3';
+        let cachedReviewsRaw = localStorage.getItem(REVIEWS_CACHE_KEY);
+        if (cachedReviewsRaw) {
+            try {
+                const parsed = JSON.parse(cachedReviewsRaw);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    renderReviewsList(parsed);
+                }
+            } catch (e) {}
+        }
+
+        // Fetch approved reviews (stale-while-revalidate)
         async function fetchReviews() {
             try {
                 const res = await fetch(`${API_BASE}/api/reviews`);
                 if (!res.ok) throw new Error();
-                const reviews = await res.json();
-                renderReviewsList(reviews);
+                const freshReviews = await res.json();
+                const freshStr = JSON.stringify(freshReviews);
+                if (freshStr !== cachedReviewsRaw) {
+                    cachedReviewsRaw = freshStr;
+                    localStorage.setItem(REVIEWS_CACHE_KEY, freshStr);
+                    renderReviewsList(freshReviews);
+                }
             } catch (err) {
-                container.innerHTML = `<div class="col-span-full text-center py-8 text-red-500 font-medium w-full">Failed to load reviews.</div>`;
+                if (!cachedReviewsRaw) {
+                    container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-400 font-medium w-full">Failed to load reviews.</div>`;
+                }
             }
         }
 

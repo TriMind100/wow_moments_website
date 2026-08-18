@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const compression = require('compression');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const multer = require('multer');
@@ -13,6 +14,7 @@ const Review   = require('./models/Review');
 const ReviewInvite = require('./models/ReviewInvite');
 
 const app = express();
+app.use(compression());
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
@@ -339,6 +341,7 @@ function invalidateTemplatesCache() {
 // ─── API: Templates ───────────────────────────────────────────────────────────
 app.get('/api/templates', async (req, res) => {
     try {
+        res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400');
         if (cachedTemplates) {
             return res.json(cachedTemplates);
         }
@@ -914,6 +917,7 @@ app.get('/api/reviews/verify-invite', async (req, res) => {
 // GET /api/reviews - public approved reviews
 app.get('/api/reviews', async (req, res) => {
     try {
+        res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400');
         const mongoOk = await connectDB();
         if (mongoOk && mongoose.connection.readyState === 1) {
             const reviews = await Review.find({ status: 'approved' }).sort({ createdAt: -1 });
