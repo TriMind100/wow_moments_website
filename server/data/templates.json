@@ -10,7 +10,8 @@
     "preview": "https://wowmoments1.kolkode.in/",
     "categories": [
       "love",
-      "anniversary"
+      "anniversary",
+      "proposal"
     ],
     "originalPrice": null,
     "discountPercent": 0
@@ -26,7 +27,10 @@
     "preview": "https://wowmoments2.kolkode.in/",
     "categories": [
       "love",
-      "anniversary"
+      "anniversary",
+      "family",
+      "friendship",
+      "customized"
     ]
   },
   {
@@ -40,7 +44,8 @@
     "preview": "https://wowmoments5.kolkode.in/",
     "categories": [
       "love",
-      "birthday"
+      "birthday",
+      "customized"
     ]
   },
   {
@@ -53,7 +58,10 @@
     "image": "assets/fathers_day_preview.png",
     "preview": "https://fathersdaycard.kolkode.in/",
     "categories": [
-      "love"
+      "love",
+      "family",
+      "festival",
+      "customized"
     ],
     "originalPrice": null,
     "discountPercent": 0
@@ -68,7 +76,9 @@
     "image": "assets/apology_gift_preview.png",
     "preview": "https://apologygift.kolkode.in/",
     "categories": [
-      "love"
+      "love",
+      "friendship",
+      "customized"
     ]
   },
   {
@@ -82,7 +92,8 @@
     "preview": "https://wowmoments4.kolkode.in/",
     "categories": [
       "love",
-      "birthday"
+      "birthday",
+      "friendship"
     ]
   },
   {
@@ -96,7 +107,8 @@
     "preview": "https://wowmoments3.kolkode.in/",
     "categories": [
       "love",
-      "proposal"
+      "proposal",
+      "anniversary"
     ]
   },
   {
@@ -110,7 +122,8 @@
     "preview": "https://wowmoments6.kolkode.in/",
     "categories": [
       "love",
-      "anniversary"
+      "anniversary",
+      "festival"
     ]
   }
 ]

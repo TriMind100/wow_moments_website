@@ -131,14 +131,122 @@ void main() {
     // 2. CMS Simulation: Load and Render Templates
     // ----------------------------------------------------------------
     const grid = document.getElementById('templates-grid');
+
+    // High-performance default templates baked into client for 0ms instant display on mobile/desktop
+    const DEFAULT_TEMPLATES = [
+        {
+            id: "t1",
+            name: "A Love That Defies Time!",
+            price: "₹379",
+            tag: "Trending",
+            tagColor: "bg-amber-500",
+            description: "Cinematic, interactive romantic story with dynamic particles, floating hearts, love timer, timeline, photo gallery, and a secret card reveal.",
+            image: "assets/love_story_preview.png",
+            preview: "https://wowmoments1.kolkode.in/",
+            categories: ["love", "anniversary", "proposal"]
+        },
+        {
+            id: "t2",
+            name: "Vintage Scrapbook",
+            price: "₹549",
+            tag: "New",
+            tagColor: "bg-secondary",
+            description: "A nostalgic journey through photos with animated transitions, music, and custom messages.",
+            image: "assets/love_story2_preview.png",
+            preview: "https://wowmoments2.kolkode.in/",
+            categories: ["love", "anniversary", "family", "friendship", "customized"]
+        },
+        {
+            id: "t6",
+            name: "Secret Passcode Birthday",
+            price: "₹279",
+            tag: "Interactive",
+            tagColor: "bg-[#ff4d8d]",
+            description: "A passcode-locked birthday surprise. Features an interactive cake with candles to blow out, a live age counter, and a beautiful handwritten letter.",
+            image: "assets/love_story5_preview.png",
+            preview: "https://wowmoments5.kolkode.in/",
+            categories: ["love", "birthday", "customized"]
+        },
+        {
+            id: "t7",
+            name: "For Baba — Father's Day",
+            price: "₹149",
+            tag: "Special",
+            tagColor: "bg-secondary",
+            description: "A warm, nostalgic Father's Day page. Features a beautiful hand-drawn background, video memory, custom polaroid grid, and an interactive envelope letter reveal.",
+            image: "assets/fathers_day_preview.png",
+            preview: "https://fathersdaycard.kolkode.in/",
+            categories: ["love", "family", "festival", "customized"]
+        },
+        {
+            id: "t3",
+            name: "Apology Gift",
+            price: "₹149",
+            tag: null,
+            tagColor: "",
+            description: "A touching, interactive website designed to express your heartfelt apologies and sweeten the healing.",
+            image: "assets/apology_gift_preview.png",
+            preview: "https://apologygift.kolkode.in/",
+            categories: ["love", "friendship", "customized"]
+        },
+        {
+            id: "t4",
+            name: "A Surprise For You",
+            price: "₹99",
+            tag: "Cute",
+            tagColor: "bg-[#ff4d8d]",
+            description: "A sweet, playful interactive surprise card filled with custom animations and personalized notes.",
+            image: "assets/love_story4_preview.png",
+            preview: "https://wowmoments4.kolkode.in/",
+            categories: ["love", "birthday", "friendship"]
+        },
+        {
+            id: "t5",
+            name: "A Love Letter",
+            price: "₹99",
+            tag: "Minimal",
+            tagColor: "bg-secondary",
+            description: "A beautifully styled, elegant digital stationery envelope and interactive love letter.",
+            image: "assets/love_story3_preview.png",
+            preview: "https://wowmoments3.kolkode.in/",
+            categories: ["love", "proposal", "anniversary"]
+        },
+        {
+            id: "t8",
+            name: "Happy Anniversary Card",
+            price: "₹129",
+            tag: "New",
+            tagColor: "bg-primary",
+            description: "A beautiful Happy Anniversary digital card featuring a personalized photo and heartfelt message.",
+            image: "assets/anniversary.png",
+            preview: "https://wowmoments6.kolkode.in/",
+            categories: ["love", "anniversary", "festival"]
+        }
+    ];
+
     if (grid) {
-        let templates = [];
+        let templates = DEFAULT_TEMPLATES;
         const TEMPLATES_CACHE_KEY = 'wow_templates_cache_v4';
+        let currentCategory = 'all';
 
         function generateWALink(name, price) {
             const baseUrl = "https://wa.me/918609539322";
             const message = `Hello Wow Moments 👋\nI would like to order the ${name} template.\nPrice: ${price}\n\nPlease let me know the next steps.`;
             return `${baseUrl}?text=${encodeURIComponent(message)}`;
+        }
+
+        function getFallbackAsset(t) {
+            const map = {
+                't1': 'love_story_preview.png',
+                't2': 'love_story2_preview.png',
+                't3': 'apology_gift_preview.png',
+                't4': 'love_story4_preview.png',
+                't5': 'love_story3_preview.png',
+                't6': 'love_story5_preview.png',
+                't7': 'fathers_day_preview.png',
+                't8': 'anniversary.png'
+            };
+            return map[t.id] || 'love_story_preview.png';
         }
 
         function renderTemplates(filteredList) {
@@ -150,9 +258,16 @@ void main() {
             }
             filteredList.forEach((t, idx) => {
                 const card = document.createElement('div');
-                card.className = "template-card glass-card review-card rounded-[2rem] overflow-hidden flex flex-col p-2 group";
+                card.className = "template-card glass-card rounded-[2rem] overflow-hidden flex flex-col p-2 group";
                 
-                const imageUrl = t.image && t.image.startsWith('/') ? `${API_BASE}${t.image}` : t.image;
+                let imageUrl = t.image;
+                if (imageUrl && imageUrl.startsWith('/api/templates/')) {
+                    imageUrl = `${API_BASE}${imageUrl}`;
+                } else if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('assets/')) {
+                    imageUrl = `assets/${imageUrl}`;
+                } else if (!imageUrl) {
+                    imageUrl = `assets/${getFallbackAsset(t)}`;
+                }
                 
                 let priceHtml;
                 if (t.discountPercent > 0 && t.originalPrice) {
@@ -169,6 +284,8 @@ void main() {
                     priceHtml = `<span class="text-primary font-bold whitespace-nowrap ml-2">${t.price}</span>`;
                 }
 
+                const fallbackSrc = `assets/${getFallbackAsset(t)}`;
+
                 card.innerHTML = `
                     <div class="relative overflow-hidden rounded-[1.8rem] bg-gray-100">
                         <img class="w-full h-72 object-cover group-hover:scale-110 transition-transform duration-700" 
@@ -176,8 +293,9 @@ void main() {
                              alt="${t.name}" 
                              loading="${idx < 2 ? 'eager' : 'lazy'}" 
                              decoding="async"
+                             onerror="if(this.src !== '${fallbackSrc}' && !this.src.endsWith('${fallbackSrc}')){ this.src = '${fallbackSrc}'; }"
                              ${idx === 0 ? 'fetchpriority="high"' : ''}>
-                        ${t.tag ? `<div class="absolute top-4 left-4 ${t.tagColor} text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">${t.tag}</div>` : ''}
+                        ${t.tag ? `<div class="absolute top-4 left-4 ${t.tagColor || 'bg-primary'} text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">${t.tag}</div>` : ''}
                     </div>
                     <div class="p-6 flex-1 flex flex-col justify-between">
                         <div>
@@ -207,61 +325,22 @@ void main() {
             });
         }
 
-        let currentCategory = 'all';
-
-        function renderSkeletonLoading(count = 3) {
-            if (!grid) return;
-            let skeletonHtml = '';
-            for (let i = 0; i < count; i++) {
-                const hiddenOnSmall = i >= 2 ? 'hidden lg:flex' : '';
-                skeletonHtml += `
-                    <div class="template-skeleton skeleton-card rounded-[2rem] p-2 flex flex-col group overflow-hidden ${hiddenOnSmall}">
-                        <div class="relative overflow-hidden rounded-[1.8rem] h-72 skeleton-shimmer flex items-center justify-center">
-                            <div class="flex items-center gap-2 px-3.5 py-1.5 bg-white/85 backdrop-blur-md rounded-full shadow-xs border border-white/90 buffering-pulse">
-                                <span class="material-symbols-outlined text-primary text-base animate-spin">sync</span>
-                                <span class="text-[11px] font-extrabold text-primary brand-font uppercase tracking-wider">Loading templates...</span>
-                            </div>
-                        </div>
-                        <div class="p-6 flex-1 flex flex-col justify-between gap-4">
-                            <div>
-                                <div class="flex justify-between items-center mb-3">
-                                    <div class="h-6 w-36 rounded-xl skeleton-shimmer"></div>
-                                    <div class="h-6 w-14 rounded-xl skeleton-shimmer"></div>
-                                </div>
-                                <div class="h-3.5 w-full rounded-lg skeleton-shimmer mb-2"></div>
-                                <div class="h-3.5 w-4/5 rounded-lg skeleton-shimmer"></div>
-                            </div>
-                            <div class="flex gap-3 mt-4">
-                                <div class="h-12 flex-1 rounded-2xl skeleton-shimmer"></div>
-                                <div class="h-12 flex-1 rounded-2xl skeleton-shimmer"></div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            grid.innerHTML = skeletonHtml;
-        }
-
-        // Instant local cache display for 0ms page load
+        // Instant display for 0ms mobile and desktop initial page load
         let cachedTemplatesRaw = safeStorage.getItem(TEMPLATES_CACHE_KEY);
         if (cachedTemplatesRaw) {
             try {
                 const parsed = JSON.parse(cachedTemplatesRaw);
                 if (Array.isArray(parsed) && parsed.length > 0) {
                     templates = parsed;
-                    renderTemplates(templates);
                 }
-            } catch (e) {
-                renderSkeletonLoading(3);
-            }
+            } catch (e) {}
         }
+        // Render immediately on DOM load
+        renderTemplates(templates);
 
-        // Fetch fresh templates from API (stale-while-revalidate with auto-retry)
+        // Fetch fresh templates from API in background (stale-while-revalidate with retry)
         async function fetchTemplates(retryCount = 0) {
             try {
-                if (!templates || templates.length === 0) {
-                    renderSkeletonLoading(3);
-                }
                 const response = await fetch(`${API_BASE}/api/templates`);
                 if (!response.ok) throw new Error('HTTP status ' + response.status);
                 const freshTemplates = await response.json();
@@ -277,31 +356,16 @@ void main() {
                         const filtered = templates.filter(t => t.categories && t.categories.includes(currentCategory));
                         renderTemplates(filtered.length > 0 ? filtered : templates);
                     }
-                } else if (!templates || templates.length === 0) {
-                    grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400 font-medium">No templates available.</div>';
                 }
             } catch (err) {
-                console.error('Error loading templates:', err);
-                // If failed and no cached templates, auto-retry once after 2.5 seconds
-                if ((!templates || templates.length === 0) && retryCount < 2) {
-                    setTimeout(() => fetchTemplates(retryCount + 1), 2500);
-                } else if (!templates || templates.length === 0) {
-                    grid.innerHTML = `
-                        <div class="col-span-full flex flex-col items-center justify-center py-12 gap-3 text-center">
-                            <span class="material-symbols-outlined text-primary text-3xl">cloud_off</span>
-                            <p class="text-sm font-semibold text-gray-600">Connecting to server...</p>
-                            <button id="retry-templates-btn" class="px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold shadow-sm active:scale-95 transition-all">Tap to Retry</button>
-                        </div>
-                    `;
-                    const retryBtn = document.getElementById('retry-templates-btn');
-                    if (retryBtn) {
-                        retryBtn.addEventListener('click', () => fetchTemplates(0));
-                    }
+                // If backend is sleeping, retry gracefully in background
+                if (retryCount < 2) {
+                    setTimeout(() => fetchTemplates(retryCount + 1), 3000);
                 }
             }
         }
 
-        // Load templates
+        // Trigger background revalidation
         fetchTemplates();
 
         // Category filter click listener
@@ -318,12 +382,6 @@ void main() {
                 });
                 btn.classList.add('text-primary', 'bg-primary-container/20', 'border-primary/30');
                 btn.classList.remove('text-on-surface-variant');
-
-                // If templates are still loading, show buffering animation and wait
-                if (!templates || templates.length === 0) {
-                    renderSkeletonLoading(3);
-                    return;
-                }
 
                 // Filter templates
                 let filtered;
@@ -347,9 +405,8 @@ void main() {
         if (viewAllBtn) {
             viewAllBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                // Select "Love" button as active since it displays all templates
                 categoryButtons.forEach(b => {
-                    if (b.getAttribute('data-category') === 'love') {
+                    if (b.getAttribute('data-category') === 'all') {
                         b.classList.add('text-primary', 'bg-primary-container/20', 'border-primary/30');
                         b.classList.remove('text-on-surface-variant');
                     } else {
@@ -357,6 +414,7 @@ void main() {
                         b.classList.add('text-on-surface-variant');
                     }
                 });
+                currentCategory = 'all';
                 renderTemplates(templates);
                 const templatesSection = document.getElementById('templates');
                 if (templatesSection) {
@@ -367,25 +425,36 @@ void main() {
     }
 
     // ----------------------------------------------------------------
-    // 3. IntersectionObserver Reveal Animations
+    // 3. IntersectionObserver Reveal Animations (Mobile-Friendly)
     // ----------------------------------------------------------------
-    const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('active');
-                // Special progress bar animation for How it Works
-                if (entry.target.id === 'how-it-works') {
-                    const progressBar = document.getElementById('progress-bar');
-                    if (progressBar) {
-                        progressBar.style.height = '100%';
+    const revealElements = document.querySelectorAll('.reveal-anim');
+    const observerOptions = { threshold: 0.01, rootMargin: '50px 0px 50px 0px' };
+    
+    if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    // Special progress bar animation for How it Works
+                    if (entry.target.id === 'how-it-works') {
+                        const progressBar = document.getElementById('progress-bar');
+                        if (progressBar) {
+                            progressBar.style.height = '100%';
+                        }
                     }
                 }
-            }
-        });
-    }, observerOptions);
+            });
+        }, observerOptions);
 
-    document.querySelectorAll('.reveal-anim').forEach(el => observer.observe(el));
+        revealElements.forEach(el => observer.observe(el));
+    } else {
+        revealElements.forEach(el => el.classList.add('active'));
+    }
+
+    // Safety fallback: Ensure all content is revealed within 800ms on mobile devices
+    setTimeout(() => {
+        revealElements.forEach(el => el.classList.add('active'));
+    }, 800);
 
     // ----------------------------------------------------------------
     // 4. Sticky Nav Transformation
@@ -572,16 +641,37 @@ void main() {
             updateArrows();
         }
 
+        const DEFAULT_REVIEWS = [
+            {
+                id: "r1",
+                name: "Rahul Verma",
+                rating: 5,
+                comment: "The anniversary website was the highlight of our 5th anniversary. My wife was in tears! The quality is just premium.",
+                location: "Bengaluru",
+                avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuCv5hSotoC2bk7fYbnjPqkhFzxBERKm0GPfK9iiarIHfjOr6aWpmnoMAxm3WwHNw6Wrxxlfx-jxYffuybYm2mTd4ov_s0CshpOV8f8X6dQv3JXUCZrzJgffi3OTeVHshJ6BYqQIjj0FBKRv0b8KsKRLCcXm853_H8TDD8osNEdL21LPoTypkG9Kylj1BnDxQGA2cGm7tboXTR-mdwRgnEmi4NNBMI2jApBVD09SbyT9NZAhWoo9Bfu9gL-GwYxWSssNZFu_AAFEIw"
+            },
+            {
+                id: "r2",
+                name: "Sneha Kapoor",
+                rating: 5,
+                comment: "Ordered a digital scrapbook for my best friend's wedding. The animations were so fluid. It felt like a real book!",
+                location: "Mumbai",
+                avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuC9qmSupc_EC9P4oGYSY36BoTa2lfyTX6_sNnAsXpTBO6v1t0-mUVM_u8VARr08DBxgGR_CgmP4bT4d2EbUCB21oDTRULlFU_YTjAYVkuMVugWwU59bRNZwVSmcvmRJ4MYEv_bOiumhWPacksZqwrWI5qYvvxJBdlubwSkEHIGAIRW3GSqZ85X-hPbjoHEwteYbJiR0dNRokLQh65z-5AUZG0HcNbn11laiNGh1Z99RMzrY5G4ygcDCqkqTK-tKxiBUqOuXFXksRg"
+            }
+        ];
+
         const REVIEWS_CACHE_KEY = 'wow_reviews_cache_v4';
+        let initialReviews = DEFAULT_REVIEWS;
         let cachedReviewsRaw = safeStorage.getItem(REVIEWS_CACHE_KEY);
         if (cachedReviewsRaw) {
             try {
                 const parsed = JSON.parse(cachedReviewsRaw);
                 if (Array.isArray(parsed) && parsed.length > 0) {
-                    renderReviewsList(parsed);
+                    initialReviews = parsed;
                 }
             } catch (e) {}
         }
+        renderReviewsList(initialReviews);
 
         // Fetch approved reviews (stale-while-revalidate)
         async function fetchReviews() {
@@ -595,9 +685,7 @@ void main() {
                     renderReviewsList(freshReviews);
                 }
             } catch (err) {
-                if (!cachedReviewsRaw) {
-                    container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-400 font-medium w-full">Failed to load reviews.</div>`;
-                }
+                // Initial reviews are already rendered
             }
         }
 
