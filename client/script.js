@@ -610,30 +610,30 @@ void main() {
 
             reviews.forEach(r => {
                 const card = document.createElement('div');
-                card.className = "flex-none w-80 glass-card review-card p-8 rounded-[2rem] flex flex-col";
+                card.className = "flex-none w-80 md:w-96 glass-card review-card p-6 md:p-8 rounded-[2rem] flex flex-col h-auto self-start";
                 card.style.scrollSnapAlign = "start";
 
                 // Avatar selection (image or initials fallback)
                 let avatarHtml;
                 if (r.avatar) {
-                    avatarHtml = `<img class="w-12 h-12 rounded-full object-cover bg-gray-50 flex-shrink-0" src="${r.avatar}" alt="${r.name}">`;
+                    avatarHtml = `<img class="w-12 h-12 rounded-full object-cover bg-gray-50 flex-shrink-0 shadow-sm" src="${r.avatar}" alt="${r.name}">`;
                 } else {
                     const initials = r.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-                    avatarHtml = `<div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm tracking-wider uppercase flex-shrink-0">${initials}</div>`;
+                    avatarHtml = `<div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm tracking-wider uppercase flex-shrink-0 shadow-sm">${initials}</div>`;
                 }
 
                 card.innerHTML = `
-                    <div class="flex gap-1 text-yellow-500 mb-4 flex-shrink-0">
-                        ${renderStars(r.rating)}
-                    </div>
-                    <p class="italic text-on-surface-variant mb-8 font-body-md flex-grow overflow-y-auto pr-1">"${r.comment}"</p>
-                    <div class="mt-auto flex items-center gap-4 flex-shrink-0">
+                    <div class="flex items-center gap-3.5 mb-3 flex-shrink-0">
                         ${avatarHtml}
-                        <div>
-                            <p class="font-bold text-sm text-gray-800">${r.name}</p>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-bold text-base text-gray-900 leading-snug truncate">${r.name}</p>
                             ${r.location ? `<p class="text-xs text-primary uppercase font-bold tracking-widest mt-0.5">${r.location}</p>` : ''}
                         </div>
                     </div>
+                    <div class="flex gap-1 text-yellow-500 mb-4 flex-shrink-0">
+                        ${renderStars(r.rating)}
+                    </div>
+                    <p class="italic text-on-surface-variant font-body-md leading-relaxed whitespace-pre-line">"${r.comment}"</p>
                 `;
                 container.appendChild(card);
             });
