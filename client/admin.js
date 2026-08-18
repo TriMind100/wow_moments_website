@@ -1084,8 +1084,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 formData.append('avatarUrl', currentRevAvatarUrl);
             }
 
-            const url = isRevEditing ? `${API_BASE}/api/reviews/${revEditId}` : `${API_BASE}/api/reviews`;
-            const method = isRevEditing ? 'PUT' : 'POST';
+            const url = isRevEditing ? `${API_BASE}/api/reviews/${revEditId}/edit` : `${API_BASE}/api/reviews`;
+            const method = 'POST';
 
             try {
                 const res = await authFetch(url, {
@@ -1104,6 +1104,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     adminRevError.classList.remove('hidden');
                 }
             } catch (err) {
+                console.error('Error submitting review form:', err);
                 adminRevError.textContent = 'Server error. Failed to submit review.';
                 adminRevError.classList.remove('hidden');
             } finally {

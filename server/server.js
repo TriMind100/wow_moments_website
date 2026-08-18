@@ -1041,16 +1041,12 @@ app.post('/api/reviews', upload.single('avatarFile'), async (req, res) => {
     }
 });
 
-// PUT /api/reviews/:id - update a review (admin only)
-app.put('/api/reviews/:id', requireAuth, upload.single('avatarFile'), async (req, res) => {
+// Update a review (admin only - preserves past avatar and unmodified fields)
+async function handleReviewUpdate(req, res) {
     try {
         const { id } = req.params;
         const { name, rating, comment, location, avatarUrl, status } = req.body;
-        const score = parseInt(rating);
-
-        if (!name || isNaN(score) || score < 1 || score > 5 || !comment) {
-            return res.status(400).json({ error: 'Name, rating (1-5), and comment are required.' });
-        }
+        const score = rating !== undefined ? parseInt(rating) : NaN;
 
         const mongoOk = await connectDB();
         const useMongoNow = mongoOk && mongoose.connection.readyState === 1;
@@ -1066,20 +1062,21 @@ app.put('/api/reviews/:id', requireAuth, upload.single('avatarFile'), async (req
 
         if (!existingReview) return res.status(404).json({ error: 'Review not found' });
 
+        // Preserve previous avatar if no new file is uploaded
         let avatarPath = existingReview.avatar;
-        if (req.file) {
+        if (req.file && req.file.buffer && req.file.buffer.length > 0) {
             avatarPath = fileToDataUrl(req.file);
-        } else if (avatarUrl) {
-            avatarPath = avatarUrl;
+        } else if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.trim() !== '' && avatarUrl !== 'null' && avatarUrl !== 'undefined') {
+            avatarPath = avatarUrl.trim();
         }
 
         const updatedData = {
-            name,
-            rating: score,
-            comment,
-            location: location || '',
+            name: (name && name.trim()) ? name.trim() : existingReview.name,
+            rating: (!isNaN(score) && score >= 1 && score <= 5) ? score : existingReview.rating,
+            comment: (comment && comment.trim()) ? comment.trim() : existingReview.comment,
+            location: location !== undefined ? location.trim() : existingReview.location,
             avatar: avatarPath,
-            status: status || existingReview.status
+            status: (status && ['approved', 'pending'].includes(status)) ? status : existingReview.status
         };
 
         if (useMongoNow) {
@@ -1100,9 +1097,12 @@ app.put('/api/reviews/:id', requireAuth, upload.single('avatarFile'), async (req
         res.json(reviews[index]);
     } catch (err) {
         console.error('Error updating review:', err);
-        res.status(500).json({ error: 'Server error: ' + err.message });
+        res.status(500).json({ error: 'Server error updating review: ' + err.message });
     }
-});
+}
+
+app.put('/api/reviews/:id', requireAuth, upload.single('avatarFile'), handleReviewUpdate);
+app.post('/api/reviews/:id/edit', requireAuth, upload.single('avatarFile'), handleReviewUpdate);
 
 // Handler for status update (supports POST, PATCH, and PUT)
 async function handleReviewStatusUpdate(req, res) {
