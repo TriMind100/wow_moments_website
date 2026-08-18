@@ -457,6 +457,120 @@ void main() {
     }, 800);
 
     // ----------------------------------------------------------------
+    // 3b. Interactive "How It Works" Workflow Experience
+    // ----------------------------------------------------------------
+    (function initWorkflowExperience() {
+        const stepCards = document.querySelectorAll('.workflow-step-card');
+        const stageScreens = document.querySelectorAll('.workflow-stage-screen');
+        if (stepCards.length === 0 || stageScreens.length === 0) return;
+
+        let currentStep = 1;
+        let autoAdvanceTimer = null;
+        let isUserInteracting = false;
+
+        function setWorkflowStep(stepNum) {
+            currentStep = stepNum;
+
+            // Update step cards UI
+            stepCards.forEach(card => {
+                const cardStep = parseInt(card.dataset.step, 10);
+                const badge = card.querySelector('.step-badge');
+                const tag = card.querySelector('span[class*="rounded-full"]');
+                const progressBar = card.querySelector('.step-progress-bar');
+                const progressFill = card.querySelector('.step-progress-fill');
+
+                if (cardStep === stepNum) {
+                    card.classList.remove('border-transparent', 'bg-white/60');
+                    card.classList.add('border-primary', 'bg-white/90', 'shadow-[0_10px_30px_rgba(185,10,90,0.1)]');
+                    if (badge) {
+                        badge.className = "step-badge w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-[#b90a5a] to-[#ff4d8d] text-white flex items-center justify-center font-extrabold text-base flex-shrink-0 shadow-md transition-transform group-hover:scale-105";
+                    }
+                    if (tag) {
+                        tag.className = "text-[10px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary uppercase tracking-wider";
+                    }
+                    if (progressBar) {
+                        progressBar.classList.remove('hidden');
+                    }
+                    if (progressFill) {
+                        progressFill.style.width = '100%';
+                    }
+                } else {
+                    card.classList.remove('border-primary', 'bg-white/90', 'shadow-[0_10px_30px_rgba(185,10,90,0.1)]');
+                    card.classList.add('border-transparent', 'bg-white/60');
+                    if (badge) {
+                        badge.className = "step-badge w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gray-100 text-gray-700 flex items-center justify-center font-extrabold text-base flex-shrink-0 shadow-xs transition-transform group-hover:scale-105";
+                    }
+                    if (tag) {
+                        tag.className = "text-[10px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600 uppercase tracking-wider";
+                    }
+                    if (progressBar) {
+                        progressBar.classList.add('hidden');
+                    }
+                    if (progressFill) {
+                        progressFill.style.width = '0%';
+                    }
+                }
+            });
+
+            // Transition stage screens
+            stageScreens.forEach(screen => {
+                const screenStage = parseInt(screen.dataset.stage, 10);
+                if (screenStage === stepNum) {
+                    screen.classList.remove('hidden');
+                    setTimeout(() => {
+                        screen.classList.remove('opacity-0', 'scale-95');
+                        screen.classList.add('opacity-100', 'scale-100');
+                    }, 20);
+                } else {
+                    screen.classList.add('opacity-0', 'scale-95');
+                    screen.classList.remove('opacity-100', 'scale-100');
+                    setTimeout(() => {
+                        if (parseInt(screen.dataset.stage, 10) !== currentStep) {
+                            screen.classList.add('hidden');
+                        }
+                    }, 300);
+                }
+            });
+        }
+
+        // Attach click listeners
+        stepCards.forEach(card => {
+            card.addEventListener('click', () => {
+                isUserInteracting = true;
+                const step = parseInt(card.dataset.step, 10);
+                setWorkflowStep(step);
+                restartTimer();
+            });
+        });
+
+        function startAutoAdvance() {
+            if (autoAdvanceTimer) clearInterval(autoAdvanceTimer);
+            autoAdvanceTimer = setInterval(() => {
+                if (!isUserInteracting) {
+                    const next = currentStep >= 4 ? 1 : currentStep + 1;
+                    setWorkflowStep(next);
+                }
+            }, 4500);
+        }
+
+        function restartTimer() {
+            clearInterval(autoAdvanceTimer);
+            setTimeout(() => {
+                isUserInteracting = false;
+                startAutoAdvance();
+            }, 8000);
+        }
+
+        const section = document.getElementById('how-it-works');
+        if (section) {
+            section.addEventListener('mouseenter', () => { isUserInteracting = true; });
+            section.addEventListener('mouseleave', () => { isUserInteracting = false; });
+        }
+
+        startAutoAdvance();
+    })();
+
+    // ----------------------------------------------------------------
     // 4. Sticky Nav Transformation
     // ----------------------------------------------------------------
     window.addEventListener('scroll', () => {
@@ -874,11 +988,11 @@ void main() {
 
         const FAQ_CATEGORIES = [
             { id: "all", label: "All Questions" },
-            { id: "order", label: "🛍️ Order & Pay" },
-            { id: "delivery", label: "⏱️ Delivery" },
-            { id: "custom", label: "🎨 Personalize" },
-            { id: "privacy", label: "🔒 Privacy" },
-            { id: "support", label: "💬 Support" }
+            { id: "order", label: "Order & Payment" },
+            { id: "delivery", label: "Delivery" },
+            { id: "custom", label: "Personalization" },
+            { id: "privacy", label: "Privacy & Safety" },
+            { id: "support", label: "Support" }
         ];
 
         const FAQ_KNOWLEDGE = [
@@ -1078,10 +1192,7 @@ void main() {
                     <div class="w-8 h-8 rounded-xl bg-[#25D366] text-white flex items-center justify-center flex-shrink-0 shadow-2xs">
                         <span class="material-symbols-outlined text-base">chat</span>
                     </div>
-                    <div>
-                        <p class="font-bold text-xs text-gray-900 leading-tight">Chat with Human on WhatsApp</p>
-                        <p class="text-[10px] text-gray-600">Quick answers directly from our support team</p>
-                    </div>
+                    <p class="font-bold text-xs text-gray-900 leading-tight">Chat with Human on WhatsApp</p>
                 </div>
                 <span class="material-symbols-outlined text-sm text-[#128C7E]">open_in_new</span>
             `;
@@ -1105,10 +1216,7 @@ void main() {
                         <div class="w-8 h-8 rounded-xl bg-pink-50 text-[#b90a5a] flex items-center justify-center flex-shrink-0 group-hover:bg-[#b90a5a] group-hover:text-white transition-colors">
                             <span class="material-symbols-outlined text-base">${faq.icon || 'help'}</span>
                         </div>
-                        <div class="min-w-0">
-                            <p class="font-bold text-xs text-gray-900 leading-snug truncate">${faq.title}</p>
-                            <p class="text-[10px] text-gray-500 truncate mt-0.5">${faq.subtitle}</p>
-                        </div>
+                        <p class="font-bold text-xs text-gray-900 leading-snug truncate">${faq.title}</p>
                     </div>
                     <span class="material-symbols-outlined text-sm text-gray-400 group-hover:text-[#b90a5a] transition-colors flex-shrink-0">chevron_right</span>
                 `;

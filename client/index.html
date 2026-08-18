@@ -1112,56 +1112,302 @@
             </div>
         </div>
     </section>
-    <!-- How It Works Section -->
-    <section class="py-6 md:py-10 px-gutter relative reveal-anim" id="how-it-works">
-        <div class="max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-20 items-center">
-            <div class="order-2 md:order-1">
-                <div class="relative pl-12 space-y-8 md:space-y-16">
-                    <div class="absolute left-[20px] top-4 bottom-4 w-[2px] bg-outline-variant">
-                        <div class="h-1/4 bg-primary transition-all duration-1000" id="progress-bar"></div>
-                    </div>
-                    <div class="relative step-item">
-                        <div
-                            class="absolute -left-12 w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold ring-8 ring-background">
-                            1</div>
-                        <h4 class="text-2xl font-bold mb-2 brand-font">Choose Template</h4>
-                        <p class="text-on-surface-variant">Select a design from our curated gallery that fits your
-                            occasion best.</p>
-                    </div>
-                    <div class="relative step-item">
-                        <div
-                            class="absolute -left-12 w-10 h-10 rounded-full bg-outline-variant flex items-center justify-center text-on-surface-variant font-bold ring-8 ring-background">
-                            2</div>
-                        <h4 class="text-2xl font-bold mb-2 brand-font">Order via WhatsApp</h4>
-                        <p class="text-on-surface-variant">Connect with our team directly. We keep it simple and
-                            personal.</p>
-                    </div>
-                    <div class="relative step-item">
-                        <div
-                            class="absolute -left-12 w-10 h-10 rounded-full bg-outline-variant flex items-center justify-center text-on-surface-variant font-bold ring-8 ring-background">
-                            3</div>
-                        <h4 class="text-2xl font-bold mb-2 brand-font">Share Content</h4>
-                        <p class="text-on-surface-variant">Send us your photos, videos, and heartfelt messages. We do
-                            the magic.</p>
-                    </div>
-                    <div class="relative step-item">
-                        <div
-                            class="absolute -left-12 w-10 h-10 rounded-full bg-outline-variant flex items-center justify-center text-on-surface-variant font-bold ring-8 ring-background">
-                            4</div>
-                        <h4 class="text-2xl font-bold mb-2 brand-font">Receive &amp; Surprise</h4>
-                        <p class="text-on-surface-variant">Get your live link within 24-48 hours. Ready to wow your
-                            loved ones.</p>
-                    </div>
+    <!-- How It Works Section (Interactive Experience) -->
+    <section class="py-12 md:py-20 px-gutter relative reveal-anim overflow-hidden" id="how-it-works">
+        <!-- Ambient background lighting -->
+        <div class="absolute top-1/2 -left-20 w-80 h-80 bg-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
+        <div class="absolute bottom-10 right-0 w-96 h-96 bg-secondary-container/20 rounded-full blur-[120px] pointer-events-none"></div>
+
+        <div class="max-w-container-max mx-auto relative z-10">
+            <!-- Section Header -->
+            <div class="text-center max-w-3xl mx-auto mb-12 md:mb-16">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-extrabold uppercase tracking-widest mb-4">
+                    <span class="material-symbols-outlined text-sm animate-pulse"></span>
+                    Simple 4-Step Process
                 </div>
+                <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-4 brand-font text-gray-900">
+                    A Seamless Journey <span class="text-primary italic">From Idea to Surprise</span>
+                </h2>
+                <p class="text-on-surface-variant text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+                    We combine emotional storytelling with interactive digital craftsmanship so your loved one receives a moment they will cherish forever.
+                </p>
             </div>
-            <div class="order-1 md:order-2">
-                <div class="glass-card p-8 rounded-[3rem] text-center border-2 border-primary/10">
-                    <h2 class="text-4xl font-extrabold mb-4 brand-font">A Seamless Journey</h2>
-                    <p class="text-on-surface-variant font-body-lg mb-8">We combine high technology with human touch to
-                        ensure your gift is nothing short of perfection.</p>
-                    <img class="rounded-2xl shadow-lg w-full h-64 object-cover"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJgG9KhAc4PGcYWnhgVGXKYo9v0Pexx-4Ye7Gkoivt0E5cNILDhDVjptXDZwP8xJaqKi0DtHrI-2NtpnQ9l1CA9tA0_NvLOl60iwC5pCm9hOG5vTHLJfUkEofX5VSByil_Hz5cQU7p58ZKLJZf52sRO14_eM1WoFDSdstBf2Rnl-RMRg6QHHGo7bLGTmNodiX_5T08ZkxVRzvOvmG8yuJQQkvS4hBfVzsZMQUQeZJnP1rJ3kmNZWysxpLeUyv7jSuAqzJqUQQ8Ig" />
+
+            <!-- Main Interactive Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+                
+                <!-- Left: 4 Interactive Step Cards (lg:col-span-6) -->
+                <div class="lg:col-span-6 space-y-3.5" id="workflow-steps-list">
+                    
+                    <!-- Step 1 Card -->
+                    <div class="workflow-step-card cursor-pointer p-4 sm:p-5 rounded-2xl sm:rounded-3xl glass-card border-2 transition-all duration-300 relative overflow-hidden group active:scale-[0.99] border-primary shadow-[0_10px_30px_rgba(185,10,90,0.1)] bg-white/90" data-step="1">
+                        <div class="flex items-start gap-4">
+                            <div class="step-badge w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-[#b90a5a] to-[#ff4d8d] text-white flex items-center justify-center font-extrabold text-base flex-shrink-0 shadow-md transition-transform group-hover:scale-105">
+                                1
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <h4 class="font-extrabold text-base sm:text-lg text-gray-900 brand-font">Choose a Template</h4>
+                                    <span class="text-[10px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary uppercase tracking-wider">Step 1</span>
+                                </div>
+                                <p class="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+                                    Browse our curated gallery of birthday sites, romantic anniversary timelines, digital scrapbooks, and interactive proposals.
+                                </p>
+                            </div>
+                        </div>
+                        <!-- Step Progress Indicator -->
+                        <div class="step-progress-bar absolute bottom-0 left-0 right-0 h-1 bg-primary/20 overflow-hidden">
+                            <div class="step-progress-fill h-full bg-primary transition-all duration-300 w-full"></div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 Card -->
+                    <div class="workflow-step-card cursor-pointer p-4 sm:p-5 rounded-2xl sm:rounded-3xl glass-card border-2 transition-all duration-300 relative overflow-hidden group active:scale-[0.99] border-transparent hover:border-pink-200 bg-white/60 hover:bg-white/90" data-step="2">
+                        <div class="flex items-start gap-4">
+                            <div class="step-badge w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gray-100 text-gray-700 flex items-center justify-center font-extrabold text-base flex-shrink-0 shadow-xs transition-transform group-hover:scale-105">
+                                2
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <h4 class="font-extrabold text-base sm:text-lg text-gray-900 brand-font">Connect on WhatsApp</h4>
+                                    <span class="text-[10px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600 uppercase tracking-wider">Step 2</span>
+                                </div>
+                                <p class="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+                                    No long forms. Tap "Order Now" on your favorite template to instantly connect directly with our designer team on WhatsApp.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="step-progress-bar absolute bottom-0 left-0 right-0 h-1 bg-primary/20 overflow-hidden hidden">
+                            <div class="step-progress-fill h-full bg-primary transition-all duration-300 w-0"></div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 Card -->
+                    <div class="workflow-step-card cursor-pointer p-4 sm:p-5 rounded-2xl sm:rounded-3xl glass-card border-2 transition-all duration-300 relative overflow-hidden group active:scale-[0.99] border-transparent hover:border-pink-200 bg-white/60 hover:bg-white/90" data-step="3">
+                        <div class="flex items-start gap-4">
+                            <div class="step-badge w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gray-100 text-gray-700 flex items-center justify-center font-extrabold text-base flex-shrink-0 shadow-xs transition-transform group-hover:scale-105">
+                                3
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <h4 class="font-extrabold text-base sm:text-lg text-gray-900 brand-font">Share Photos, Song &amp; Messages</h4>
+                                    <span class="text-[10px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600 uppercase tracking-wider">Step 3</span>
+                                </div>
+                                <p class="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+                                    Send your best photos, preferred background music, custom dates, and private secret notes. We weave them into a bespoke digital masterpiece.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="step-progress-bar absolute bottom-0 left-0 right-0 h-1 bg-primary/20 overflow-hidden hidden">
+                            <div class="step-progress-fill h-full bg-primary transition-all duration-300 w-0"></div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 Card -->
+                    <div class="workflow-step-card cursor-pointer p-4 sm:p-5 rounded-2xl sm:rounded-3xl glass-card border-2 transition-all duration-300 relative overflow-hidden group active:scale-[0.99] border-transparent hover:border-pink-200 bg-white/60 hover:bg-white/90" data-step="4">
+                        <div class="flex items-start gap-4">
+                            <div class="step-badge w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gray-100 text-gray-700 flex items-center justify-center font-extrabold text-base flex-shrink-0 shadow-xs transition-transform group-hover:scale-105">
+                                4
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <h4 class="font-extrabold text-base sm:text-lg text-gray-900 brand-font">Receive Live Link &amp; Surprise!</h4>
+                                    <span class="text-[10px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600 uppercase tracking-wider">Step 4</span>
+                                </div>
+                                <p class="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+                                    Get your private live URL + QR card in 24–48 hours (or 12h express). Send it at midnight to witness unforgettable smiles and tears of joy!
+                                </p>
+                            </div>
+                        </div>
+                        <div class="step-progress-bar absolute bottom-0 left-0 right-0 h-1 bg-primary/20 overflow-hidden hidden">
+                            <div class="step-progress-fill h-full bg-primary transition-all duration-300 w-0"></div>
+                        </div>
+                    </div>
+
                 </div>
+
+                <!-- Right: Interactive Dynamic Visual Stage (lg:col-span-6) -->
+                <div class="lg:col-span-6 relative">
+                    <!-- Glassmorphism Stage Container -->
+                    <div class="glass-card rounded-[2.5rem] sm:rounded-[3rem] p-6 sm:p-8 md:p-10 border-2 border-white/60 shadow-2xl relative overflow-hidden bg-gradient-to-b from-white/90 via-white/80 to-pink-50/50 backdrop-blur-xl">
+                        
+                        <!-- Floating Micro-Badges -->
+                        <div class="absolute top-4 left-4 z-20 flex items-center gap-1.5 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full shadow-xs border border-pink-100 text-[11px] font-bold text-gray-800">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                            <span>⚡ Live Interactive Preview</span>
+                        </div>
+                        
+                        <div class="absolute top-4 right-4 z-20 flex items-center gap-1 px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-full shadow-xs border border-pink-100 text-[10px] font-extrabold text-primary">
+                            <span class="material-symbols-outlined text-xs">lock</span> Private Link
+                        </div>
+
+                        <!-- Dynamic Showcase Viewport -->
+                        <div class="pt-6 min-h-[360px] sm:min-h-[420px] flex items-center justify-center relative w-full" id="workflow-stage-viewport">
+                            
+                            <!-- Screen 1: Template Selection View (Real Website Screenshot) -->
+                            <div class="workflow-stage-screen transition-all duration-500 w-full flex flex-col items-center opacity-100 transform scale-100" data-stage="1">
+                                <div class="w-full max-w-[340px] sm:max-w-sm bg-white rounded-2xl p-3 sm:p-4 shadow-lg border border-pink-100 space-y-3 relative overflow-hidden">
+                                    <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span>
+                                            <span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
+                                            <span class="w-2.5 h-2.5 rounded-full bg-green-400"></span>
+                                        </div>
+                                        <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">Real Template Preview</span>
+                                    </div>
+                                    
+                                    <div class="relative rounded-xl overflow-hidden shadow-xs group border border-pink-100">
+                                        <img src="assets/love_story_preview.png" alt="A Love That Defies Time Template Preview" class="w-full h-36 sm:h-44 object-cover object-top rounded-xl transition-transform group-hover:scale-105 duration-300">
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-2.5 sm:p-3">
+                                            <div class="text-white">
+                                                <div class="flex items-center gap-1.5 mb-0.5">
+                                                    <span class="text-[9px] font-extrabold bg-amber-500 text-white px-1.5 py-0.5 rounded uppercase tracking-wider">Trending</span>
+                                                    <span class="text-[9px] text-pink-200">Interactive 3D</span>
+                                                </div>
+                                                <p class="text-xs sm:text-sm font-bold leading-tight">A Love That Defies Time!</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center justify-between pt-0.5">
+                                        <div class="flex flex-wrap gap-1">
+                                            <span class="text-[9px] sm:text-[10px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md font-semibold">🎵 Love Song</span>
+                                            <span class="text-[9px] sm:text-[10px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md font-semibold">💌 Letter Reveal</span>
+                                        </div>
+                                        <span class="text-xs sm:text-sm font-extrabold text-primary">₹379</span>
+                                    </div>
+                                </div>
+                                <p class="text-center text-[11px] sm:text-xs text-gray-500 font-medium mt-3 sm:mt-4 flex items-center justify-center gap-1">
+                                    <span class="material-symbols-outlined text-primary text-sm">touch_app</span> Tap any step to explore each stage
+                                </p>
+                            </div>
+
+                            <!-- Screen 2: WhatsApp Chat View (Real WhatsApp Order Experience) -->
+                            <div class="workflow-stage-screen transition-all duration-500 w-full flex-col items-center hidden opacity-0 transform scale-95" data-stage="2">
+                                <div class="w-full max-w-[340px] sm:max-w-sm bg-[#e5ddd5] rounded-2xl overflow-hidden shadow-lg border border-gray-200">
+                                    <!-- WhatsApp Header -->
+                                    <div class="bg-[#075e54] text-white p-2.5 sm:p-3 flex items-center justify-between">
+                                        <div class="flex items-center gap-2 sm:gap-2.5">
+                                            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#25D366] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                                                WM
+                                            </div>
+                                            <div>
+                                                <p class="text-xs font-bold flex items-center gap-1">Wow Moments Support <span class="material-symbols-outlined text-emerald-300 text-xs">verified</span></p>
+                                                <p class="text-[9px] text-emerald-200">Online • Typically replies in 1m</p>
+                                            </div>
+                                        </div>
+                                        <span class="material-symbols-outlined text-sm">more_vert</span>
+                                    </div>
+
+                                    <!-- Chat Bubbles -->
+                                    <div class="p-2.5 sm:p-3 space-y-2 text-xs bg-[#efeae2]">
+                                        <div class="flex justify-end">
+                                            <div class="bg-[#dcf8c6] text-gray-800 p-2 sm:p-2.5 rounded-xl rounded-tr-xs shadow-xs max-w-[85%] text-[10px] sm:text-[11px] leading-relaxed">
+                                                Hi! I'd like to order <strong>"A Love That Defies Time!"</strong> for our anniversary on Friday 💖
+                                                <span class="block text-[8px] text-gray-500 text-right mt-0.5">10:30 AM ✓✓</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-start">
+                                            <div class="bg-white text-gray-800 p-2 sm:p-2.5 rounded-xl rounded-tl-xs shadow-xs max-w-[88%] text-[10px] sm:text-[11px] leading-relaxed">
+                                                We'd love to make this unforgettable! ✨ Please send your 6–10 photos and your favorite romantic song!
+                                                <span class="block text-[8px] text-gray-400 text-right mt-0.5">10:31 AM</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Chat Input Dummy -->
+                                    <div class="bg-white p-2 flex items-center gap-2 border-t border-gray-200">
+                                        <span class="material-symbols-outlined text-gray-400 text-sm">sentiment_satisfied</span>
+                                        <div class="flex-1 bg-gray-100 text-gray-400 text-[10px] sm:text-[11px] py-1 px-2.5 rounded-full">Type a message...</div>
+                                        <span class="material-symbols-outlined text-[#075e54] text-sm">mic</span>
+                                    </div>
+                                </div>
+                                <p class="text-center text-[11px] sm:text-xs text-gray-500 font-medium mt-3 sm:mt-4">
+                                    Personal designer assistance directly on WhatsApp without long forms.
+                                </p>
+                            </div>
+
+                            <!-- Screen 3: Media & Customization Curation View (Real Screenshots) -->
+                            <div class="workflow-stage-screen transition-all duration-500 w-full flex-col items-center hidden opacity-0 transform scale-95" data-stage="3">
+                                <div class="w-full max-w-[340px] sm:max-w-sm bg-white rounded-2xl p-3 sm:p-4 shadow-lg border border-pink-100 space-y-2.5 sm:space-y-3">
+                                    <p class="text-xs font-extrabold text-gray-800 flex items-center justify-between border-b border-gray-100 pb-2">
+                                        <span>Personalized Content Assembled</span>
+                                        <span class="text-primary text-[9px] sm:text-[10px] bg-pink-50 px-2 py-0.5 rounded-full font-bold">100% Customized</span>
+                                    </p>
+
+                                    <!-- Music Disc & Track Preview -->
+                                    <div class="p-2 sm:p-2.5 rounded-xl bg-pink-50/60 border border-pink-100 flex items-center gap-2.5 sm:gap-3">
+                                        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gray-900 flex items-center justify-center text-pink-400 animate-spin flex-shrink-0" style="animation-duration: 4s;">
+                                            <span class="material-symbols-outlined text-sm">music_note</span>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-xs font-bold text-gray-800 truncate">Perfect — Ed Sheeran</p>
+                                            <p class="text-[9px] sm:text-[10px] text-gray-500">Custom background music</p>
+                                        </div>
+                                        <span class="material-symbols-outlined text-primary text-sm">graphic_eq</span>
+                                    </div>
+
+                                    <!-- Real Website Template Assets Grid -->
+                                    <div class="grid grid-cols-3 gap-1.5 sm:gap-2">
+                                        <div class="relative rounded-lg overflow-hidden h-14 sm:h-16 border border-pink-200 shadow-2xs">
+                                            <img src="assets/love_story2_preview.png" alt="Scrapbook Memory" class="w-full h-full object-cover">
+                                            <span class="absolute bottom-0.5 right-0.5 text-[7px] bg-black/70 text-white px-1 rounded">Photo 1</span>
+                                        </div>
+                                        <div class="relative rounded-lg overflow-hidden h-14 sm:h-16 border border-pink-200 shadow-2xs">
+                                            <img src="assets/love_story5_preview.png" alt="Birthday Memory" class="w-full h-full object-cover">
+                                            <span class="absolute bottom-0.5 right-0.5 text-[7px] bg-black/70 text-white px-1 rounded">Photo 2</span>
+                                        </div>
+                                        <div class="relative rounded-lg overflow-hidden h-14 sm:h-16 border border-pink-200 shadow-2xs">
+                                            <img src="assets/fathers_day_preview.png" alt="Family Memory" class="w-full h-full object-cover">
+                                            <span class="absolute bottom-0.5 right-0.5 text-[7px] bg-black/70 text-white px-1 rounded">Photo 3</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Secret Letter Badge -->
+                                    <div class="p-2 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-between text-[10px] sm:text-[11px] text-emerald-800 font-semibold">
+                                        <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-xs text-emerald-600">mail</span> Secret Love Letter</span>
+                                        <span class="text-[8px] sm:text-[9px] bg-emerald-200/60 px-1.5 py-0.5 rounded font-bold">Encrypted</span>
+                                    </div>
+                                </div>
+                                <p class="text-center text-[11px] sm:text-xs text-gray-500 font-medium mt-3 sm:mt-4">
+                                    Every slide, animation, song and letter is carefully crafted for your story.
+                                </p>
+                            </div>
+
+                            <!-- Screen 4: Live Delivery & Wow Moment Celebration (Real Phone Mockup) -->
+                            <div class="workflow-stage-screen transition-all duration-500 w-full flex-col items-center hidden opacity-0 transform scale-95" data-stage="4">
+                                <div class="w-full max-w-[340px] sm:max-w-sm bg-gradient-to-br from-pink-500 via-[#b90a5a] to-[#80053a] text-white rounded-2xl p-4 sm:p-5 shadow-2xl relative overflow-hidden space-y-3 sm:space-y-4">
+                                    
+                                    <div class="text-center space-y-0.5">
+                                        <div class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest text-pink-100">
+                                            🎉 Live Link Ready
+                                        </div>
+                                        <h4 class="text-base sm:text-lg font-extrabold brand-font">Surprise Unlocked! ❤️</h4>
+                                    </div>
+
+                                    <!-- Real Mockup Image Feature -->
+                                    <div class="rounded-xl overflow-hidden border border-white/30 shadow-md bg-white">
+                                        <img src="assets/love_story_mockup.png" alt="Live Website Phone Mockup" class="w-full h-28 sm:h-36 object-cover object-top" onerror="this.src='assets/love_story_preview.png'">
+                                    </div>
+
+                                    <!-- Live Link Box -->
+                                    <div class="bg-white text-gray-900 p-2.5 rounded-xl shadow-md flex items-center justify-between gap-2">
+                                        <div class="flex items-center gap-1.5 min-w-0">
+                                            <span class="material-symbols-outlined text-primary text-sm sm:text-base">link</span>
+                                            <span class="text-[11px] sm:text-xs font-bold truncate text-primary">wowmoments1.kolkode.in</span>
+                                        </div>
+                                        <a href="https://wowmoments1.kolkode.in/" target="_blank" rel="noopener noreferrer" class="text-[9px] sm:text-[10px] font-extrabold bg-primary text-white px-2 sm:px-2.5 py-1 rounded-lg shadow-xs hover:bg-[#a0084d] transition-colors flex-shrink-0">Visit Demo</a>
+                                    </div>
+                                </div>
+                                <p class="text-center text-[11px] sm:text-xs text-gray-500 font-medium mt-3 sm:mt-4 flex items-center justify-center gap-1">
+                                    <span class="material-symbols-outlined text-emerald-600 text-sm">verified</span> Delivered in 24–48 hours (or 12h express rush)
+                                </p>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>
