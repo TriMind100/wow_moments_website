@@ -801,6 +801,28 @@ document.addEventListener('DOMContentLoaded', () => {
     let revEditId = null;
     let currentRevAvatarUrl = null;
     let reviewsList = [];
+    let currentRevFilter = 'all';
+
+    // Moderation Filter Buttons
+    const filterBtns = document.querySelectorAll('.rev-filter-btn');
+    const countAllEl = document.getElementById('count-all');
+    const countPendingEl = document.getElementById('count-pending');
+    const countApprovedEl = document.getElementById('count-approved');
+    const pendingBadge = document.getElementById('admin-pending-badge');
+    const pendingAlertBox = document.getElementById('pending-alert-box');
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentRevFilter = btn.getAttribute('data-filter');
+            filterBtns.forEach(b => {
+                b.classList.remove('bg-white', 'shadow-sm', 'text-gray-800');
+                b.classList.add('text-gray-500');
+            });
+            btn.classList.add('bg-white', 'shadow-sm', 'text-gray-800');
+            btn.classList.remove('text-gray-500');
+            renderAdminReviewsList(reviewsList);
+        });
+    });
 
     async function loadReviews() {
         if (!adminReviewsList) return;
@@ -817,22 +839,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderAdminReviewsList(reviews) {
         adminReviewsList.innerHTML = '';
-        adminReviewsCount.textContent = `${reviews.length} Reviews`;
+        
+        const totalCount = reviews.length;
+        const pendingCount = reviews.filter(r => r.status === 'pending').length;
+        const approvedCount = reviews.filter(r => r.status === 'approved').length;
 
-        if (reviews.length === 0) {
-            adminReviewsList.innerHTML = '<p class="text-xs text-gray-400 text-center py-8">No reviews found.</p>';
+        if (countAllEl) countAllEl.textContent = totalCount;
+        if (countPendingEl) countPendingEl.textContent = pendingCount;
+        if (countApprovedEl) countApprovedEl.textContent = approvedCount;
+
+        if (pendingBadge) {
+            if (pendingCount > 0) {
+                pendingBadge.textContent = `${pendingCount} Needs Approval`;
+                pendingBadge.classList.remove('hidden');
+            } else {
+                pendingBadge.classList.add('hidden');
+            }
+        }
+
+        if (pendingAlertBox) {
+            if (pendingCount > 0) {
+                pendingAlertBox.classList.remove('hidden');
+            } else {
+                pendingAlertBox.classList.add('hidden');
+            }
+        }
+
+        // Apply filter
+        let filteredReviews = reviews;
+        if (currentRevFilter === 'pending') {
+            filteredReviews = reviews.filter(r => r.status === 'pending');
+        } else if (currentRevFilter === 'approved') {
+            filteredReviews = reviews.filter(r => r.status === 'approved');
+        }
+
+        if (filteredReviews.length === 0) {
+            const emptyMsg = currentRevFilter === 'pending'
+                ? '🎉 All caught up! No pending reviews awaiting approval.'
+                : currentRevFilter === 'approved'
+                ? 'No live reviews yet. Approve pending submissions or add one directly!'
+                : 'No reviews found.';
+            adminReviewsList.innerHTML = `<div class="bg-gray-50 border border-gray-100 rounded-2xl p-8 text-center text-xs text-gray-400 font-medium">${emptyMsg}</div>`;
             return;
         }
 
-        reviews.forEach(r => {
+        filteredReviews.forEach(r => {
+            const isApproved = r.status === 'approved';
             const card = document.createElement('div');
-            card.className = 'bg-white border border-gray-100 rounded-2xl p-4 flex gap-4 items-start shadow-sm relative group hover:border-gray-200 transition-all duration-200';
+            card.className = `rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-start shadow-sm relative group transition-all duration-200 ${
+                isApproved 
+                    ? 'bg-white border border-gray-100 hover:border-gray-200' 
+                    : 'bg-amber-50/40 border-2 border-amber-300 hover:border-amber-400'
+            }`;
 
             // Moderation Status Badge
-            const isApproved = r.status === 'approved';
             const statusBadge = isApproved
-                ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200">Live</span>`
-                : `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">Pending</span>`;
+                ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span>Live on Site</span>`
+                : `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">⚡ Pending Approval</span>`;
 
             // Star icons rating
             let ratingStars = '';
@@ -843,37 +906,52 @@ document.addEventListener('DOMContentLoaded', () => {
             // Avatar helper
             let avatarHtml;
             if (r.avatar) {
-                avatarHtml = `<img src="${r.avatar}" alt="${r.name}" class="w-12 h-12 object-cover rounded-full bg-gray-50 flex-shrink-0">`;
+                avatarHtml = `<img src="${r.avatar}" alt="${r.name}" class="w-12 h-12 object-cover rounded-full bg-gray-50 flex-shrink-0 border border-gray-100 shadow-xs">`;
             } else {
                 const initials = r.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-                avatarHtml = `<div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase flex-shrink-0">${initials}</div>`;
+                avatarHtml = `<div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase flex-shrink-0 shadow-xs">${initials}</div>`;
             }
 
-            card.innerHTML = `
-                ${avatarHtml}
-                <div class="flex-grow min-w-0 pr-24">
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <h4 class="font-bold text-sm truncate">${r.name}</h4>
-                        ${statusBadge}
-                    </div>
-                    <div class="text-[10px] text-gray-400 flex items-center gap-1.5 mt-0.5">
-                        ${r.location ? `<span>${r.location}</span> • ` : ''}
-                        <span>${new Date(r.createdAt).toLocaleDateString()}</span>
-                    </div>
-                    <div class="flex gap-0.5 my-1.5">${ratingStars}</div>
-                    <p class="text-xs text-gray-600 line-clamp-3 italic">"${r.comment}"</p>
-                </div>
-                <div class="absolute right-3 top-4 flex flex-col gap-1.5">
-                    <!-- Approve Toggle Button -->
-                    <button data-id="${r.id}" data-action="toggle-status" class="toggle-status-btn px-2 py-1 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition-all duration-200 ${isApproved ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'bg-green-50 text-green-700 hover:bg-green-100'}" title="${isApproved ? 'Unapprove (Hide)' : 'Approve (Publish)'}">
-                        <span class="material-symbols-outlined text-xs">${isApproved ? 'unpublished' : 'check_circle'}</span>
-                        ${isApproved ? 'Hide' : 'Approve'}
+            // Action buttons HTML
+            const approveButtonHtml = !isApproved
+                ? `
+                    <button data-id="${r.id}" data-action="approve" class="px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow active:scale-95 transition-all duration-150" title="Approve & Publish to Website">
+                        <span class="material-symbols-outlined text-sm">check_circle</span>
+                        <span>Approve Review</span>
                     </button>
-                    <div class="flex gap-1.5 justify-end">
-                        <button data-id="${r.id}" data-action="edit" class="edit-review-btn w-7 h-7 rounded-full bg-primary/5 hover:bg-primary/10 text-primary flex items-center justify-center transition-all duration-200" title="Edit Review">
+                `
+                : `
+                    <button data-id="${r.id}" data-action="unapprove" class="px-2.5 py-1 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-600 transition-all duration-150" title="Hide this review from live website">
+                        <span class="material-symbols-outlined text-xs">visibility_off</span>
+                        <span>Hide</span>
+                    </button>
+                `;
+
+            card.innerHTML = `
+                <div class="flex items-start gap-3 flex-grow min-w-0">
+                    ${avatarHtml}
+                    <div class="flex-grow min-w-0 pr-2">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h4 class="font-extrabold text-sm text-gray-900">${r.name}</h4>
+                            ${statusBadge}
+                        </div>
+                        <div class="text-[10px] text-gray-400 flex items-center gap-1.5 mt-0.5">
+                            ${r.location ? `<span class="font-medium text-gray-500">${r.location}</span> • ` : ''}
+                            <span>${new Date(r.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div class="flex gap-0.5 my-1.5">${ratingStars}</div>
+                        <p class="text-xs text-gray-700 italic bg-white/60 p-2.5 rounded-xl border border-gray-100">"${r.comment}"</p>
+                    </div>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 w-full sm:w-auto mt-2 sm:mt-0 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+                    ${approveButtonHtml}
+                    <div class="flex items-center gap-1.5">
+                        <button data-id="${r.id}" data-action="edit" class="w-7 h-7 rounded-full bg-primary/5 hover:bg-primary/10 text-primary flex items-center justify-center transition-all duration-150 active:scale-95" title="Edit Review Details">
                             <span class="material-symbols-outlined text-sm">edit</span>
                         </button>
-                        <button data-id="${r.id}" data-action="delete" class="delete-review-btn w-7 h-7 rounded-full bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-all duration-200" title="Delete Review">
+                        <button data-id="${r.id}" data-action="delete" class="w-7 h-7 rounded-full bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-all duration-150 active:scale-95" title="Delete Review">
                             <span class="material-symbols-outlined text-sm">delete</span>
                         </button>
                     </div>
@@ -882,7 +960,7 @@ document.addEventListener('DOMContentLoaded', () => {
             adminReviewsList.appendChild(card);
         });
 
-        // Add event listeners
+        // Add event listeners to review action buttons
         adminReviewsList.querySelectorAll('button').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const id = btn.getAttribute('data-id');
@@ -891,13 +969,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (!review) return;
 
-                if (action === 'toggle-status') {
-                    const newStatus = review.status === 'approved' ? 'pending' : 'approved';
-                    await updateReviewStatus(review, newStatus);
+                if (action === 'approve') {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">sync</span> Approving...';
+                    await updateReviewStatus(review, 'approved');
+                } else if (action === 'unapprove') {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-xs">sync</span>';
+                    await updateReviewStatus(review, 'pending');
                 } else if (action === 'edit') {
                     startEditReview(review);
                 } else if (action === 'delete') {
-                    if (confirm(`Are you sure you want to delete the review from ${review.name}?`)) {
+                    if (confirm(`Are you sure you want to permanently delete the review from "${review.name}"?`)) {
                         await deleteReview(review.id);
                     }
                 }
@@ -907,6 +990,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function updateReviewStatus(review, newStatus) {
         try {
+            // First attempt quick PATCH /api/reviews/:id/status
+            const res = await authFetch(`${API_BASE}/api/reviews/${review.id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (res.ok) {
+                await loadReviews();
+                return;
+            }
+
+            // Fallback to PUT
             const formData = new FormData();
             formData.append('name', review.name);
             formData.append('rating', review.rating);
@@ -915,19 +1011,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (review.avatar) formData.append('avatarUrl', review.avatar);
             formData.append('status', newStatus);
 
-            const res = await authFetch(`${API_BASE}/api/reviews/${review.id}`, {
+            const putRes = await authFetch(`${API_BASE}/api/reviews/${review.id}`, {
                 method: 'PUT',
                 body: formData
             });
 
-            if (res.ok) {
-                loadReviews();
+            if (putRes.ok) {
+                await loadReviews();
             } else {
-                const err = await res.json();
+                const err = await putRes.json();
                 alert(err.error || 'Failed to update review status');
             }
         } catch (err) {
-            console.error('Error toggling review status:', err);
+            console.error('Error updating review status:', err);
+            alert('Server error updating review status.');
         }
     }
 

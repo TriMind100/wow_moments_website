@@ -1102,6 +1102,46 @@ app.put('/api/reviews/:id', requireAuth, upload.single('avatarFile'), async (req
     }
 });
 
+// PATCH /api/reviews/:id/status - quick approve/unapprove review (admin only)
+app.patch('/api/reviews/:id/status', requireAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        if (!status || !['approved', 'pending'].includes(status)) {
+            return res.status(400).json({ error: 'Status must be "approved" or "pending".' });
+        }
+
+        const mongoOk = await connectDB();
+        const useMongoNow = mongoOk && mongoose.connection.readyState === 1;
+
+        if (useMongoNow) {
+            const updatedReview = await Review.findOneAndUpdate(
+                { id },
+                { $set: { status } },
+                { new: true }
+            );
+            if (!updatedReview) return res.status(404).json({ error: 'Review not found' });
+            return res.json({ success: true, review: updatedReview });
+        }
+
+        if (process.env.VERCEL) {
+            return res.status(503).json({ error: 'Database not connected.' });
+        }
+
+        const reviews = readReviews();
+        const index = reviews.findIndex(r => r.id === id);
+        if (index === -1) return res.status(404).json({ error: 'Review not found' });
+
+        reviews[index].status = status;
+        writeReviews(reviews);
+        res.json({ success: true, review: reviews[index] });
+    } catch (err) {
+        console.error('Error updating review status:', err);
+        res.status(500).json({ error: 'Server error updating review status: ' + err.message });
+    }
+});
+
 // DELETE /api/reviews/:id - delete a review (admin only)
 app.delete('/api/reviews/:id', requireAuth, async (req, res) => {
     try {
