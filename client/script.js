@@ -1323,6 +1323,7 @@ void main() {
             modal.classList.add('open');
             iconOpen.classList.add('hidden');
             iconClose.classList.remove('hidden');
+            toggleBtn.classList.remove('animate-bounce');
             if (tooltip) tooltip.classList.add('opacity-0', 'pointer-events-none');
             initWelcomeState();
             setTimeout(() => {
@@ -1335,6 +1336,7 @@ void main() {
             modal.classList.remove('open');
             iconOpen.classList.remove('hidden');
             iconClose.classList.add('hidden');
+            toggleBtn.classList.add('animate-bounce');
         }
 
         toggleBtn.addEventListener('click', (e) => {
