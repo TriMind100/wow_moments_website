@@ -853,4 +853,294 @@ void main() {
             setActiveLink(currentSection);
         });
     })();
+
+    // ----------------------------------------------------------------
+    // 8. Interactive FAQ Chatbot Assistant
+    // ----------------------------------------------------------------
+    (function initFAQChatbot() {
+        const toggleBtn = document.getElementById('chatbot-toggle-btn');
+        const closeBtn = document.getElementById('chatbot-close-btn');
+        const modal = document.getElementById('chatbot-modal');
+        const messagesArea = document.getElementById('chatbot-messages');
+        const inputField = document.getElementById('chatbot-input');
+        const sendBtn = document.getElementById('chatbot-send-btn');
+        const iconOpen = document.getElementById('chatbot-icon-open');
+        const iconClose = document.getElementById('chatbot-icon-close');
+        const tooltip = document.getElementById('chatbot-tooltip');
+        const tooltipClose = document.getElementById('chatbot-tooltip-close');
+        const typingIndicator = document.getElementById('chatbot-typing');
+
+        if (!toggleBtn || !modal || !messagesArea) return;
+
+        const FAQ_KNOWLEDGE = [
+            {
+                id: "delivery",
+                shortTitle: "⏱️ Delivery Time",
+                question: "How long does it take to deliver?",
+                keywords: ["delivery", "time", "how long", "urgent", "fast", "hours", "days", "when", "duration", "ready", "express"],
+                answer: "✨ <strong>Delivery Timeline:</strong><br>• <strong>Standard Delivery:</strong> 24 to 48 hours once we receive your photos and messages.<br>• <strong>Express Delivery:</strong> Within 12 hours upon request! 🚀<br><br>You'll receive a private live link directly on WhatsApp to preview and share."
+            },
+            {
+                id: "privacy",
+                shortTitle: "🔒 Link Privacy & Safety",
+                question: "Is my surprise website link private and secure?",
+                keywords: ["private", "privacy", "secure", "security", "secret", "password", "safe", "link", "safety", "protect"],
+                answer: "🔒 <strong>100% Private & Confidential:</strong><br>• Every website gets a unique, unlisted URL.<br>• Only people you share the exact link with can view it.<br>• We can also add <strong>passcode protection</strong> to your gift website if you want extra security!"
+            },
+            {
+                id: "photos",
+                shortTitle: "🖼️ Photos & Letters Confidentiality",
+                question: "Who has access to the photos and letters I share?",
+                keywords: ["photo", "photos", "image", "images", "text", "letter", "access", "see", "confidential", "storage", "who has access"],
+                answer: "🛡️ <strong>Strict Confidentiality:</strong><br>• Only our dedicated design team creating your gift has access to your files.<br>• We never share, sell, or post your personal memories publicly without explicit permission."
+            },
+            {
+                id: "google",
+                shortTitle: "🔍 Search Engine Indexing",
+                question: "Can my gift website be searched on Google?",
+                keywords: ["google", "search", "index", "find", "public", "seo", "crawl", "online search"],
+                answer: "🚫 <strong>No, never indexed on Google:</strong><br>• All our websites are built with <code>noindex</code> tags to prevent Google and other search engines from indexing them.<br>• Your site stays completely hidden from web search results."
+            },
+            {
+                id: "delete",
+                shortTitle: "🗑️ Delete Website / Data Later",
+                question: "Can I request to delete my website or photos later?",
+                keywords: ["delete", "remove", "erase", "take down", "storage", "cancel", "destroy", "purge", "later"],
+                answer: "🗑️ <strong>Full Data Control:</strong><br>• Yes! If you ever wish to take down the site or delete your photos/text after delivery, message us on WhatsApp.<br>• We permanently erase everything within 24 hours."
+            },
+            {
+                id: "pricing_order",
+                shortTitle: "💳 Pricing & How to Order",
+                question: "How much does it cost and how do I order?",
+                keywords: ["price", "cost", "pricing", "rate", "order", "how to order", "buy", "pay", "payment", "templates"],
+                answer: "🎁 <strong>Affordable & High Quality:</strong><br>• Templates range from <strong>₹99 to ₹549</strong> based on dynamic animations, music, and interactive features.<br>• <strong>To order:</strong> Browse our <strong>Templates</strong> section, pick your favorite design, and tap <strong>Order Now</strong> to start on WhatsApp!"
+            },
+            {
+                id: "customization",
+                shortTitle: "🎨 Custom Music & Personalization",
+                question: "Can I customize the background music and messages?",
+                keywords: ["custom", "customize", "music", "song", "audio", "message", "personalize", "change", "text", "photos"],
+                answer: "🎨 <strong>Fully Personalized:</strong><br>• Absolutely! You can add your favorite background song, custom memories, secret letter reveal, countdown timers, and interactive timeline."
+            }
+        ];
+
+        let isOpen = false;
+        let hasInitialized = false;
+
+        function scrollToBottom() {
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        function createBotBubble(htmlContent) {
+            const wrap = document.createElement('div');
+            wrap.className = "flex gap-2.5 items-start max-w-[92%]";
+            wrap.innerHTML = `
+                <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-[#b90a5a] to-[#ff4d8d] text-white flex items-center justify-center flex-shrink-0 text-xs shadow-2xs mt-0.5">
+                    <span class="material-symbols-outlined text-sm">smart_toy</span>
+                </div>
+                <div class="chat-bubble-bot px-3.5 py-2.5 text-xs sm:text-sm text-gray-800 leading-relaxed">
+                    ${htmlContent}
+                </div>
+            `;
+            return wrap;
+        }
+
+        function createUserBubble(text) {
+            const wrap = document.createElement('div');
+            wrap.className = "flex justify-end";
+            wrap.innerHTML = `
+                <div class="chat-bubble-user px-3.5 py-2 text-xs sm:text-sm max-w-[85%] break-words">
+                    ${text}
+                </div>
+            `;
+            return wrap;
+        }
+
+        function renderChips() {
+            const container = document.createElement('div');
+            container.className = "flex flex-col gap-1.5 pt-1 w-full";
+            
+            const prompt = document.createElement('p');
+            prompt.className = "text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-0.5";
+            prompt.textContent = "Select a Question:";
+            container.appendChild(prompt);
+
+            FAQ_KNOWLEDGE.forEach(faq => {
+                const btn = document.createElement('button');
+                btn.className = "faq-chip text-left px-3 py-2 rounded-xl bg-white border border-pink-100 text-gray-800 text-xs font-semibold hover:border-[#b90a5a] hover:bg-[#fff0f5] active:scale-98 transition-all shadow-2xs flex items-center justify-between gap-2";
+                btn.innerHTML = `
+                    <span>${faq.shortTitle}</span>
+                    <span class="material-symbols-outlined text-sm text-gray-400">chevron_right</span>
+                `;
+                btn.addEventListener('click', () => {
+                    handleUserQuestion(faq.question, faq);
+                });
+                container.appendChild(btn);
+            });
+
+            // WhatsApp Direct Action Chip
+            const waBtn = document.createElement('a');
+            waBtn.href = "https://wa.me/918609539322?text=" + encodeURIComponent("Hello Wow Moments 👋 I have a question about virtual gift websites.");
+            waBtn.target = "_blank";
+            waBtn.rel = "noopener noreferrer";
+            waBtn.className = "faq-chip text-left px-3 py-2 rounded-xl bg-[#25D366]/10 border border-[#25D366]/30 text-[#128C7E] text-xs font-bold hover:bg-[#25D366]/20 active:scale-98 transition-all shadow-2xs flex items-center justify-between gap-2 mt-1";
+            waBtn.innerHTML = `
+                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-[#25D366]">chat</span> Chat with Human on WhatsApp</span>
+                <span class="material-symbols-outlined text-sm">open_in_new</span>
+            `;
+            container.appendChild(waBtn);
+
+            messagesArea.appendChild(container);
+            scrollToBottom();
+        }
+
+        function handleUserQuestion(questionText, matchedFaq) {
+            // User message
+            messagesArea.appendChild(createUserBubble(questionText));
+            scrollToBottom();
+
+            // Show typing indicator
+            typingIndicator.classList.remove('hidden');
+            scrollToBottom();
+
+            setTimeout(() => {
+                typingIndicator.classList.add('hidden');
+
+                let botResponseHtml = '';
+                if (matchedFaq) {
+                    botResponseHtml = `
+                        <div class="space-y-2">
+                            <p class="font-bold text-gray-900 border-b border-gray-100 pb-1">${matchedFaq.question}</p>
+                            <div>${matchedFaq.answer}</div>
+                        </div>
+                    `;
+                } else {
+                    // Try to match keywords from text
+                    const lower = questionText.toLowerCase();
+                    const found = FAQ_KNOWLEDGE.find(f => f.keywords.some(kw => lower.includes(kw)));
+                    if (found) {
+                        botResponseHtml = `
+                            <div class="space-y-2">
+                                <p class="font-bold text-gray-900 border-b border-gray-100 pb-1">${found.question}</p>
+                                <div>${found.answer}</div>
+                            </div>
+                        `;
+                    } else {
+                        botResponseHtml = `
+                            <div>
+                                <p class="mb-2">I couldn't find an exact pre-defined answer for that, but our friendly team is available right now on WhatsApp to assist you directly!</p>
+                            </div>
+                        `;
+                    }
+                }
+
+                // Add follow-up actions container
+                const botBubble = createBotBubble(botResponseHtml);
+                
+                const actionsWrap = document.createElement('div');
+                actionsWrap.className = "flex flex-wrap gap-2 mt-3 pt-2 border-t border-gray-100";
+                
+                const waLink = document.createElement('a');
+                waLink.href = "https://wa.me/918609539322?text=" + encodeURIComponent(`Hello Wow Moments 👋 I asked: "${questionText}" and would like to know more.`);
+                waLink.target = "_blank";
+                waLink.rel = "noopener noreferrer";
+                waLink.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#25D366] text-white text-[11px] font-bold shadow-xs hover:bg-[#128C7E] active:scale-95 transition-all";
+                waLink.innerHTML = `<span class="material-symbols-outlined text-xs">chat</span> Chat on WhatsApp`;
+                actionsWrap.appendChild(waLink);
+
+                const resetBtn = document.createElement('button');
+                resetBtn.className = "inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 text-[11px] font-bold active:scale-95 transition-all";
+                resetBtn.innerHTML = `<span class="material-symbols-outlined text-xs">refresh</span> Ask Another Question`;
+                resetBtn.addEventListener('click', () => {
+                    renderChips();
+                });
+                actionsWrap.appendChild(resetBtn);
+
+                botBubble.querySelector('.chat-bubble-bot').appendChild(actionsWrap);
+                messagesArea.appendChild(botBubble);
+                scrollToBottom();
+            }, 350);
+        }
+
+        function initWelcomeState() {
+            if (hasInitialized) return;
+            hasInitialized = true;
+            messagesArea.innerHTML = '';
+            
+            const welcome1 = createBotBubble("👋 <strong>Hello! Welcome to Wow Moments.</strong><br>I'm your FAQ assistant. How can I help you make your gift extraordinary?");
+            messagesArea.appendChild(welcome1);
+            renderChips();
+        }
+
+        function openChatbot() {
+            isOpen = true;
+            modal.classList.add('open');
+            iconOpen.classList.add('hidden');
+            iconClose.classList.remove('hidden');
+            if (tooltip) tooltip.classList.add('opacity-0', 'pointer-events-none');
+            initWelcomeState();
+            setTimeout(() => {
+                if (inputField) inputField.focus();
+            }, 300);
+        }
+
+        function closeChatbot() {
+            isOpen = false;
+            modal.classList.remove('open');
+            iconOpen.classList.remove('hidden');
+            iconClose.classList.add('hidden');
+        }
+
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isOpen) closeChatbot();
+            else openChatbot();
+        });
+
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeChatbot();
+        });
+
+        if (tooltip) {
+            tooltip.addEventListener('click', () => {
+                openChatbot();
+            });
+        }
+        if (tooltipClose) {
+            tooltipClose.addEventListener('click', (e) => {
+                e.stopPropagation();
+                tooltip.style.display = 'none';
+            });
+        }
+
+        function handleSend() {
+            const query = inputField.value.trim();
+            if (!query) return;
+            inputField.value = '';
+            handleUserQuestion(query, null);
+        }
+
+        sendBtn.addEventListener('click', handleSend);
+        inputField.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSend();
+            }
+        });
+
+        // Close when clicking outside on mobile or desktop
+        document.addEventListener('click', (e) => {
+            if (isOpen && !modal.contains(e.target) && !toggleBtn.contains(e.target)) {
+                closeChatbot();
+            }
+        });
+
+        // Escape key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isOpen) {
+                closeChatbot();
+            }
+        });
+    })();
 });

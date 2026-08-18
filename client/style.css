@@ -280,6 +280,45 @@ webgl-shader {
     background: linear-gradient(to left, #fff8f8 10%, rgba(255, 248, 248, 0) 100%);
 }
 
+/* ═════════════════════════════════════════════════════════════════
+   FAQ CHATBOT COMPONENT STYLING
+   ═════════════════════════════════════════════════════════════════ */
+#chatbot-modal {
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+}
+
+#chatbot-modal.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1) translateY(0);
+}
+
+.chat-bubble-user {
+    background: linear-gradient(135deg, #b90a5a 0%, #ff4d8d 100%);
+    color: white;
+    border-radius: 1.25rem 1.25rem 0.25rem 1.25rem;
+    box-shadow: 0 4px 12px rgba(185, 10, 90, 0.2);
+}
+
+.chat-bubble-bot {
+    background: rgba(255, 255, 255, 0.95);
+    color: #374151;
+    border-radius: 1.25rem 1.25rem 1.25rem 0.25rem;
+    border: 1px solid rgba(255, 220, 230, 0.7);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+}
+
+.faq-chip {
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.4, 1);
+}
+
+.faq-chip:hover {
+    transform: translateY(-2px);
+    background-color: #fff0f5;
+    border-color: #b90a5a;
+    color: #b90a5a;
+}
+
 
 
 /* ═════════════════════════════════════════════════════════════════

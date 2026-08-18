@@ -1414,11 +1414,79 @@
             © 2024 Wow Moments (A Part of KolKode). Crafted for celebrations.
         </div>
     </footer>
-    <!-- WhatsApp FAB -->
-    <a class="fixed bottom-24 right-6 md:bottom-10 md:right-10 z-[60] w-16 h-16 bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all animate-bounce md:animate-none"
-        href="https://wa.me/918609539322">
-        <span class="material-symbols-outlined text-3xl">chat</span>
-    </a>
+    <!-- Interactive FAQ Chatbot Floating Trigger & Window -->
+    <div id="chatbot-wrapper" class="fixed bottom-24 right-4 sm:right-6 md:bottom-8 md:right-8 z-[75] flex flex-col items-end">
+        <!-- Floating Prompt / Tooltip -->
+        <div id="chatbot-tooltip" class="mb-2 mr-1 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-2xl shadow-lg border border-pink-100 flex items-center gap-2 animate-bounce cursor-pointer text-xs font-bold text-gray-800 transition-all duration-300 select-none">
+            <span class="text-base">👋</span> Ask FAQ Assistant!
+            <button id="chatbot-tooltip-close" aria-label="Dismiss tooltip" class="text-gray-400 hover:text-gray-600 text-xs ml-1">✕</button>
+        </div>
+
+        <!-- Chatbot FAB Button -->
+        <button id="chatbot-toggle-btn" aria-label="Open FAQ Chatbot"
+            class="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-tr from-[#25D366] to-[#128C7E] hover:from-[#128C7E] hover:to-[#25D366] text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 relative group">
+            <span id="chatbot-icon-open" class="material-symbols-outlined text-2xl sm:text-3xl transition-transform group-hover:scale-110">smart_toy</span>
+            <span id="chatbot-icon-close" class="material-symbols-outlined text-2xl sm:text-3xl hidden">close</span>
+            
+            <!-- Online status indicator dot -->
+            <span class="absolute top-1 right-1 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full flex">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+            </span>
+        </button>
+    </div>
+
+    <!-- Chatbot Window -->
+    <div id="chatbot-modal"
+        class="fixed bottom-24 right-3 sm:right-6 md:bottom-28 md:right-8 z-[80] w-[calc(100vw-1.5rem)] sm:w-[380px] max-w-[400px] h-[540px] max-h-[75vh] sm:max-h-[80vh] flex flex-col bg-white/95 backdrop-blur-2xl rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-pink-100 overflow-hidden transition-all duration-300 transform scale-90 opacity-0 pointer-events-none origin-bottom-right">
+        
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-[#b90a5a] via-[#d4146a] to-[#ff4d8d] p-4 text-white flex items-center justify-between shadow-sm flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-xs">
+                        <span class="material-symbols-outlined text-2xl">smart_toy</span>
+                    </div>
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-white rounded-full"></span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm leading-tight brand-font flex items-center gap-1.5">
+                        Wow Assistant
+                        <span class="text-[9px] bg-white/25 px-1.5 py-0.5 rounded-full uppercase tracking-wider font-semibold">Bot</span>
+                    </h3>
+                    <p class="text-[11px] text-pink-100">Instant Answers &amp; Support</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <a href="https://wa.me/918609539322" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp" class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-all">
+                    <span class="material-symbols-outlined text-lg">chat</span>
+                </a>
+                <button id="chatbot-close-btn" aria-label="Close Chatbot" class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-all active:scale-90">
+                    <span class="material-symbols-outlined text-lg">close</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat messages area -->
+        <div id="chatbot-messages" class="flex-1 p-4 overflow-y-auto space-y-3.5 text-xs sm:text-sm custom-scrollbar bg-surface/50">
+            <!-- Dynamic chatbot content will be injected by script.js -->
+        </div>
+
+        <!-- Typing Indicator Container -->
+        <div id="chatbot-typing" class="px-4 py-1.5 hidden flex items-center gap-1 text-gray-400 text-xs bg-surface/50">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#b90a5a] animate-bounce" style="animation-delay: 0s;"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-[#b90a5a] animate-bounce" style="animation-delay: 0.15s;"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-[#b90a5a] animate-bounce" style="animation-delay: 0.3s;"></span>
+            <span class="text-[10px] text-gray-400 ml-1 font-medium">Assistant is typing...</span>
+        </div>
+
+        <!-- Input Box -->
+        <div class="p-3 bg-white border-t border-gray-100 flex items-center gap-2 flex-shrink-0">
+            <input type="text" id="chatbot-input" placeholder="Ask a question or type keyword..." class="flex-1 px-3.5 py-2.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:border-[#b90a5a] focus:bg-white transition-all">
+            <button id="chatbot-send-btn" aria-label="Send query" class="w-9 h-9 rounded-full bg-[#b90a5a] hover:bg-[#a0084d] text-white flex items-center justify-center shadow-xs active:scale-95 transition-all flex-shrink-0">
+                <span class="material-symbols-outlined text-lg">send</span>
+            </button>
+        </div>
+    </div>
     <!-- BottomNavBar -->
     <nav
         class="fixed bottom-0 w-full z-50 md:hidden bg-surface/80 backdrop-blur-2xl border-t border-white/40 shadow-[0px_-10px_30px_rgba(185,10,90,0.08)] flex justify-around items-center h-20 px-4 pb-2">
