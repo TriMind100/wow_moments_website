@@ -1186,8 +1186,88 @@
             </button>
             
             <div class="flex items-start gap-4 sm:gap-6 md:gap-8 overflow-x-auto pb-10 pt-2 custom-scrollbar px-1 sm:px-2 md:px-4 max-w-7xl mx-auto scroll-smooth no-scrollbar" id="reviews-container" style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scroll-padding: 1rem;">
-                <!-- Reviews will be dynamically injected here -->
-                <div class="col-span-full text-center py-8 text-gray-500 font-medium w-full">Loading reviews...</div>
+                <!-- Review Skeleton Shimmer Loading Cards -->
+                <div class="flex-none w-[82vw] max-w-[340px] sm:w-80 md:w-96 skeleton-card rounded-[1.8rem] sm:rounded-[2rem] p-5 sm:p-6 md:p-8 flex flex-col gap-4 self-start">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-full skeleton-shimmer flex-shrink-0"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="h-4 w-28 rounded-lg skeleton-shimmer"></div>
+                            <div class="h-3 w-16 rounded-md skeleton-shimmer"></div>
+                        </div>
+                    </div>
+                    <div class="flex gap-1.5 py-0.5">
+                        <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                        <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                        <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                        <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                        <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                    </div>
+                    <div class="space-y-2 mt-1">
+                        <div class="h-3.5 w-full rounded-md skeleton-shimmer"></div>
+                        <div class="h-3.5 w-5/6 rounded-md skeleton-shimmer"></div>
+                        <div class="h-3.5 w-3/4 rounded-md skeleton-shimmer"></div>
+                    </div>
+                    <div class="pt-2">
+                        <div class="flex items-center gap-2 px-3 py-1 bg-white/70 backdrop-blur-md rounded-full shadow-2xs border border-white/80 buffering-pulse w-fit">
+                            <span class="material-symbols-outlined text-primary text-xs animate-spin">sync</span>
+                            <span class="text-[9px] font-extrabold text-primary brand-font uppercase tracking-wider">Loading reviews...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-none w-[82vw] max-w-[340px] sm:w-80 md:w-96 skeleton-card rounded-[1.8rem] sm:rounded-[2rem] p-5 sm:p-6 md:p-8 flex flex-col gap-4 self-start">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-full skeleton-shimmer flex-shrink-0"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="h-4 w-28 rounded-lg skeleton-shimmer"></div>
+                            <div class="h-3 w-16 rounded-md skeleton-shimmer"></div>
+                        </div>
+                    </div>
+                    <div class="flex gap-1.5 py-0.5">
+                        <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                        <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                        <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                        <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                        <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                    </div>
+                    <div class="space-y-2 mt-1">
+                        <div class="h-3.5 w-full rounded-md skeleton-shimmer"></div>
+                        <div class="h-3.5 w-5/6 rounded-md skeleton-shimmer"></div>
+                        <div class="h-3.5 w-3/4 rounded-md skeleton-shimmer"></div>
+                    </div>
+                    <div class="pt-2">
+                        <div class="flex items-center gap-2 px-3 py-1 bg-white/70 backdrop-blur-md rounded-full shadow-2xs border border-white/80 buffering-pulse w-fit">
+                            <span class="material-symbols-outlined text-primary text-xs animate-spin">sync</span>
+                            <span class="text-[9px] font-extrabold text-primary brand-font uppercase tracking-wider">Loading reviews...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-none w-[82vw] max-w-[340px] sm:w-80 md:w-96 skeleton-card rounded-[1.8rem] sm:rounded-[2rem] p-5 sm:p-6 md:p-8 hidden sm:flex flex-col gap-4 self-start">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-full skeleton-shimmer flex-shrink-0"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="h-4 w-28 rounded-lg skeleton-shimmer"></div>
+                            <div class="h-3 w-16 rounded-md skeleton-shimmer"></div>
+                        </div>
+                    </div>
+                    <div class="flex gap-1.5 py-0.5">
+                        <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                        <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                        <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                        <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                        <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                    </div>
+                    <div class="space-y-2 mt-1">
+                        <div class="h-3.5 w-full rounded-md skeleton-shimmer"></div>
+                        <div class="h-3.5 w-5/6 rounded-md skeleton-shimmer"></div>
+                        <div class="h-3.5 w-3/4 rounded-md skeleton-shimmer"></div>
+                    </div>
+                    <div class="pt-2">
+                        <div class="flex items-center gap-2 px-3 py-1 bg-white/70 backdrop-blur-md rounded-full shadow-2xs border border-white/80 buffering-pulse w-fit">
+                            <span class="material-symbols-outlined text-primary text-xs animate-spin">sync</span>
+                            <span class="text-[9px] font-extrabold text-primary brand-font uppercase tracking-wider">Loading reviews...</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>

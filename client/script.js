@@ -641,51 +641,93 @@ void main() {
             updateArrows();
         }
 
-        const DEFAULT_REVIEWS = [
-            {
-                id: "r1",
-                name: "Rahul Verma",
-                rating: 5,
-                comment: "The anniversary website was the highlight of our 5th anniversary. My wife was in tears! The quality is just premium.",
-                location: "Bengaluru",
-                avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuCv5hSotoC2bk7fYbnjPqkhFzxBERKm0GPfK9iiarIHfjOr6aWpmnoMAxm3WwHNw6Wrxxlfx-jxYffuybYm2mTd4ov_s0CshpOV8f8X6dQv3JXUCZrzJgffi3OTeVHshJ6BYqQIjj0FBKRv0b8KsKRLCcXm853_H8TDD8osNEdL21LPoTypkG9Kylj1BnDxQGA2cGm7tboXTR-mdwRgnEmi4NNBMI2jApBVD09SbyT9NZAhWoo9Bfu9gL-GwYxWSssNZFu_AAFEIw"
-            },
-            {
-                id: "r2",
-                name: "Sneha Kapoor",
-                rating: 5,
-                comment: "Ordered a digital scrapbook for my best friend's wedding. The animations were so fluid. It felt like a real book!",
-                location: "Mumbai",
-                avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuC9qmSupc_EC9P4oGYSY36BoTa2lfyTX6_sNnAsXpTBO6v1t0-mUVM_u8VARr08DBxgGR_CgmP4bT4d2EbUCB21oDTRULlFU_YTjAYVkuMVugWwU59bRNZwVSmcvmRJ4MYEv_bOiumhWPacksZqwrWI5qYvvxJBdlubwSkEHIGAIRW3GSqZ85X-hPbjoHEwteYbJiR0dNRokLQh65z-5AUZG0HcNbn11laiNGh1Z99RMzrY5G4ygcDCqkqTK-tKxiBUqOuXFXksRg"
+        // Render reviews skeleton loading animation (Glassmorphism & Shimmer)
+        function renderReviewsSkeleton(count = 3) {
+            if (!container) return;
+            let skeletonHtml = '';
+            for (let i = 0; i < count; i++) {
+                const hiddenClass = i >= 2 ? 'hidden sm:flex' : 'flex';
+                skeletonHtml += `
+                    <div class="flex-none w-[82vw] max-w-[340px] sm:w-80 md:w-96 skeleton-card rounded-[1.8rem] sm:rounded-[2rem] p-5 sm:p-6 md:p-8 ${hiddenClass} flex-col gap-4 self-start">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-full skeleton-shimmer flex-shrink-0"></div>
+                            <div class="flex-1 space-y-2">
+                                <div class="h-4 w-28 rounded-lg skeleton-shimmer"></div>
+                                <div class="h-3 w-16 rounded-md skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                        <div class="flex gap-1.5 py-0.5">
+                            <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                            <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                            <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                            <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                            <div class="h-3.5 w-3.5 rounded-sm skeleton-shimmer"></div>
+                        </div>
+                        <div class="space-y-2 mt-1">
+                            <div class="h-3.5 w-full rounded-md skeleton-shimmer"></div>
+                            <div class="h-3.5 w-5/6 rounded-md skeleton-shimmer"></div>
+                            <div class="h-3.5 w-3/4 rounded-md skeleton-shimmer"></div>
+                        </div>
+                        <div class="pt-2">
+                            <div class="flex items-center gap-2 px-3 py-1 bg-white/70 backdrop-blur-md rounded-full shadow-2xs border border-white/80 buffering-pulse w-fit">
+                                <span class="material-symbols-outlined text-primary text-xs animate-spin">sync</span>
+                                <span class="text-[9px] font-extrabold text-primary brand-font uppercase tracking-wider">Loading reviews...</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
             }
-        ];
+            container.innerHTML = skeletonHtml;
+        }
 
-        const REVIEWS_CACHE_KEY = 'wow_reviews_cache_v4';
-        let initialReviews = DEFAULT_REVIEWS;
+        const REVIEWS_CACHE_KEY = 'wow_real_reviews_cache_v1';
         let cachedReviewsRaw = safeStorage.getItem(REVIEWS_CACHE_KEY);
         if (cachedReviewsRaw) {
             try {
                 const parsed = JSON.parse(cachedReviewsRaw);
                 if (Array.isArray(parsed) && parsed.length > 0) {
-                    initialReviews = parsed;
+                    renderReviewsList(parsed);
+                } else {
+                    renderReviewsSkeleton(3);
                 }
-            } catch (e) {}
+            } catch (e) {
+                renderReviewsSkeleton(3);
+            }
+        } else {
+            renderReviewsSkeleton(3);
         }
-        renderReviewsList(initialReviews);
 
-        // Fetch approved reviews (stale-while-revalidate)
-        async function fetchReviews() {
+        // Fetch approved reviews (stale-while-revalidate with auto-retry)
+        async function fetchReviews(retryCount = 0) {
             try {
                 const res = await fetch(`${API_BASE}/api/reviews`);
-                if (!res.ok) throw new Error();
+                if (!res.ok) throw new Error('HTTP ' + res.status);
                 const freshReviews = await res.json();
-                if (Array.isArray(freshReviews) && freshReviews.length > 0) {
+                if (Array.isArray(freshReviews)) {
                     const freshStr = JSON.stringify(freshReviews);
                     safeStorage.setItem(REVIEWS_CACHE_KEY, freshStr);
                     renderReviewsList(freshReviews);
                 }
             } catch (err) {
-                // Initial reviews are already rendered
+                console.warn('Reviews loading issue:', err);
+                if (retryCount < 2) {
+                    setTimeout(() => fetchReviews(retryCount + 1), 2500);
+                } else if (!cachedReviewsRaw) {
+                    container.innerHTML = `
+                        <div class="col-span-full flex flex-col items-center justify-center py-8 px-4 text-center mx-auto w-full gap-2">
+                            <span class="material-symbols-outlined text-primary text-2xl">rate_review</span>
+                            <p class="text-xs sm:text-sm font-semibold text-gray-600">Connecting to reviews server...</p>
+                            <button id="retry-reviews-btn" class="px-4 py-1.5 rounded-xl bg-primary text-white text-xs font-bold shadow-xs active:scale-95 transition-all mt-1">Tap to Retry</button>
+                        </div>
+                    `;
+                    const retryBtn = document.getElementById('retry-reviews-btn');
+                    if (retryBtn) {
+                        retryBtn.addEventListener('click', () => {
+                            renderReviewsSkeleton(3);
+                            fetchReviews(0);
+                        });
+                    }
+                }
             }
         }
 
