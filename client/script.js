@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ----------------------------------------------------------------
     const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === ''
         ? 'http://localhost:3000'
-        : 'https://wow-moments-backend.onrender.com'; // Replace with your actual Render API URL in production
+        : 'https://wow-moments-website-backend.onrender.com';
     // ----------------------------------------------------------------
     // 1. WebGL Background Animation
     // ----------------------------------------------------------------

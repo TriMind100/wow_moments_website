@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === ''
         ? 'http://localhost:3000'
-        : 'https://wow-moments-backend.onrender.com'; // Replace with actual Render backend URL
+        : 'https://wow-moments-website-backend.onrender.com';
     const loginSection = document.getElementById('login-section');
     const dashboardSection = document.getElementById('dashboard-section');
     const loginForm = document.getElementById('login-form');

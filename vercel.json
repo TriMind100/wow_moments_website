@@ -1,21 +1,17 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "server.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "server/data/templates.json",
-          "client/**"
-        ]
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/server.js"
-    }
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/", "destination": "/client/index.html" },
+    { "source": "/admin", "destination": "/client/admin.html" },
+    { "source": "/admin.html", "destination": "/client/admin.html" },
+    { "source": "/write-review", "destination": "/client/write-review.html" },
+    { "source": "/write-review.html", "destination": "/client/write-review.html" },
+    { "source": "/assets/(.*)", "destination": "/client/assets/$1" },
+    { "source": "/style.css", "destination": "/client/style.css" },
+    { "source": "/script.js", "destination": "/client/script.js" },
+    { "source": "/admin.js", "destination": "/client/admin.js" },
+    { "source": "/sitemap.xml", "destination": "/client/sitemap.xml" },
+    { "source": "/robots.txt", "destination": "/client/robots.txt" },
+    { "source": "/(.*)", "destination": "/client/$1" }
   ]
 }
