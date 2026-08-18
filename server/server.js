@@ -914,17 +914,39 @@ app.get('/api/reviews/verify-invite', async (req, res) => {
 });
 
 // ─── API: Reviews ─────────────────────────────────────────────────────────────
+let _cachedAdminReviews = null;
+let _cachedAdminReviewsTime = 0;
+let _cachedPublicReviews = null;
+let _cachedPublicReviewsTime = 0;
+
+function invalidateReviewsCache() {
+    _cachedAdminReviews = null;
+    _cachedAdminReviewsTime = 0;
+    _cachedPublicReviews = null;
+    _cachedPublicReviewsTime = 0;
+}
+
 // GET /api/reviews - public approved reviews
 app.get('/api/reviews', async (req, res) => {
     try {
         res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400');
+        if (_cachedPublicReviews && (Date.now() - _cachedPublicReviewsTime < 30000)) {
+            return res.json(_cachedPublicReviews);
+        }
         const mongoOk = await connectDB();
         if (mongoOk && mongoose.connection.readyState === 1) {
-            const reviews = await Review.find({ status: 'approved' }).sort({ createdAt: -1 });
+            const reviews = await Review.find({ status: 'approved' })
+                .select('-__v')
+                .sort({ createdAt: -1 })
+                .lean();
+            _cachedPublicReviews = reviews;
+            _cachedPublicReviewsTime = Date.now();
             return res.json(reviews);
         }
-        const reviews = readReviews();
-        res.json(reviews.filter(r => r.status === 'approved'));
+        const reviews = readReviews().filter(r => r.status === 'approved');
+        _cachedPublicReviews = reviews;
+        _cachedPublicReviewsTime = Date.now();
+        res.json(reviews);
     } catch (err) {
         console.error('Error getting reviews:', err);
         res.status(500).json({ error: 'Server error fetching reviews.' });
@@ -934,12 +956,23 @@ app.get('/api/reviews', async (req, res) => {
 // GET /api/reviews/admin - admin view of all reviews
 app.get('/api/reviews/admin', requireAuth, async (req, res) => {
     try {
+        if (_cachedAdminReviews && (Date.now() - _cachedAdminReviewsTime < 15000)) {
+            return res.json(_cachedAdminReviews);
+        }
         const mongoOk = await connectDB();
         if (mongoOk && mongoose.connection.readyState === 1) {
-            const reviews = await Review.find().sort({ createdAt: -1 });
+            const reviews = await Review.find()
+                .select('-__v')
+                .sort({ createdAt: -1 })
+                .lean();
+            _cachedAdminReviews = reviews;
+            _cachedAdminReviewsTime = Date.now();
             return res.json(reviews);
         }
-        res.json(readReviews().sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)));
+        const reviews = readReviews().sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+        _cachedAdminReviews = reviews;
+        _cachedAdminReviewsTime = Date.now();
+        res.json(reviews);
     } catch (err) {
         console.error('Error getting admin reviews:', err);
         res.status(500).json({ error: 'Server error fetching reviews.' });
@@ -1016,6 +1049,9 @@ app.post('/api/reviews', upload.single('avatarFile'), async (req, res) => {
             const newReview = new Review(newReviewData);
             await newReview.save();
 
+            // Invalidate cached reviews
+            invalidateReviewsCache();
+
             // Update token usage if validated
             if (validatedInvite) {
                 if (validatedInvite.type === 'single') {
@@ -1035,6 +1071,7 @@ app.post('/api/reviews', upload.single('avatarFile'), async (req, res) => {
         const reviews = readReviews();
         reviews.push(newReviewData);
         writeReviews(reviews);
+        invalidateReviewsCache();
 
         // Update token usage if validated
         if (validatedInvite) {
@@ -1094,6 +1131,8 @@ async function handleReviewUpdate(req, res) {
             status: (status && ['approved', 'pending'].includes(status)) ? status : existingReview.status
         };
 
+        invalidateReviewsCache();
+
         if (useMongoNow) {
             const updatedReview = await Review.findOneAndUpdate(
                 reviewQuery, { $set: updatedData }, { new: true }
@@ -1132,6 +1171,8 @@ async function handleReviewStatusUpdate(req, res) {
         const mongoOk = await connectDB();
         const useMongoNow = mongoOk && mongoose.connection.readyState === 1;
         const reviewQuery = (useMongoNow && mongoose.Types.ObjectId.isValid(id)) ? { $or: [{ id }, { _id: id }] } : { id };
+
+        invalidateReviewsCache();
 
         if (useMongoNow) {
             const updatedReview = await Review.findOneAndUpdate(
@@ -1179,6 +1220,8 @@ app.delete('/api/reviews/:id', requireAuth, async (req, res) => {
         }
 
         if (!review) return res.status(404).json({ error: 'Review not found' });
+
+        invalidateReviewsCache();
 
         if (useMongoNow) {
             await Review.findOneAndDelete({ id });

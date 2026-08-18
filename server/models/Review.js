@@ -34,12 +34,17 @@ const reviewSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ['pending', 'approved'],
-        default: 'pending'
+        default: 'pending',
+        index: true
     },
     createdAt: {
         type: Date,
-        default: Date.now
+        default: Date.now,
+        index: true
     }
 });
+
+reviewSchema.index({ status: 1, createdAt: -1 });
+reviewSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Review', reviewSchema);

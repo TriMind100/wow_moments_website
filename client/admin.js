@@ -824,12 +824,55 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    async function loadReviews() {
+    function renderReviewsSkeleton() {
         if (!adminReviewsList) return;
+        adminReviewsList.innerHTML = `
+            <div class="space-y-3 animate-pulse">
+                <div class="bg-white/80 border border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-start shadow-xs">
+                    <div class="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0"></div>
+                    <div class="flex-grow min-w-0 space-y-2 w-full">
+                        <div class="h-4 bg-gray-200 rounded w-1/3"></div>
+                        <div class="h-3 bg-gray-200 rounded w-1/4"></div>
+                        <div class="h-12 bg-gray-100 rounded-xl w-full"></div>
+                    </div>
+                </div>
+                <div class="bg-white/80 border border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-start shadow-xs">
+                    <div class="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0"></div>
+                    <div class="flex-grow min-w-0 space-y-2 w-full">
+                        <div class="h-4 bg-gray-200 rounded w-1/3"></div>
+                        <div class="h-3 bg-gray-200 rounded w-1/4"></div>
+                        <div class="h-12 bg-gray-100 rounded-xl w-full"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async function loadReviews(forceSilent = false) {
+        if (!adminReviewsList) return;
+
+        // Instant SWR: Render cached reviews in 0ms
+        if (!forceSilent && (!reviewsList || reviewsList.length === 0)) {
+            try {
+                const cached = sessionStorage.getItem('admin_reviews_cache');
+                if (cached) {
+                    reviewsList = JSON.parse(cached);
+                    renderAdminReviewsList(reviewsList);
+                } else {
+                    renderReviewsSkeleton();
+                }
+            } catch (e) {
+                renderReviewsSkeleton();
+            }
+        }
+
         try {
             const response = await authFetch(`${API_BASE}/api/reviews/admin`);
             if (response.ok) {
                 reviewsList = await response.json();
+                try {
+                    sessionStorage.setItem('admin_reviews_cache', JSON.stringify(reviewsList));
+                } catch (e) {}
                 renderAdminReviewsList(reviewsList);
             }
         } catch (err) {
@@ -970,12 +1013,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!review) return;
 
                 if (action === 'approve') {
-                    btn.disabled = true;
-                    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">sync</span> Approving...';
                     await updateReviewStatus(review, 'approved');
                 } else if (action === 'unapprove') {
-                    btn.disabled = true;
-                    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-xs">sync</span>';
                     await updateReviewStatus(review, 'pending');
                 } else if (action === 'edit') {
                     startEditReview(review);
@@ -989,6 +1028,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function updateReviewStatus(review, newStatus) {
+        const prevStatus = review.status;
+        
+        // 1. Instant Optimistic UI Update (0ms)
+        review.status = newStatus;
+        try {
+            sessionStorage.setItem('admin_reviews_cache', JSON.stringify(reviewsList));
+        } catch (e) {}
+        renderAdminReviewsList(reviewsList);
+
+        // 2. Background Sync with Server
         try {
             const res = await authFetch(`${API_BASE}/api/reviews/${review.id}/status`, {
                 method: 'POST',
@@ -998,15 +1047,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const data = await res.json();
             if (res.ok && data.success) {
-                await loadReviews();
+                if (data.review) {
+                    const idx = reviewsList.findIndex(r => r.id === review.id);
+                    if (idx !== -1) {
+                        reviewsList[idx] = data.review;
+                        try {
+                            sessionStorage.setItem('admin_reviews_cache', JSON.stringify(reviewsList));
+                        } catch (e) {}
+                    }
+                }
             } else {
+                // Revert on error
+                review.status = prevStatus;
+                try {
+                    sessionStorage.setItem('admin_reviews_cache', JSON.stringify(reviewsList));
+                } catch (e) {}
+                renderAdminReviewsList(reviewsList);
                 alert(data.error || 'Failed to update review status.');
-                await loadReviews();
             }
         } catch (err) {
             console.error('Error updating review status:', err);
+            // Revert on network failure
+            review.status = prevStatus;
+            try {
+                sessionStorage.setItem('admin_reviews_cache', JSON.stringify(reviewsList));
+            } catch (e) {}
+            renderAdminReviewsList(reviewsList);
             alert('Server error updating review status. Please try again.');
-            await loadReviews();
         }
     }
 
@@ -1051,17 +1118,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function deleteReview(id) {
+        const prevList = [...reviewsList];
+        
+        // 1. Instant Optimistic Delete (0ms)
+        reviewsList = reviewsList.filter(r => r.id !== id);
+        try {
+            sessionStorage.setItem('admin_reviews_cache', JSON.stringify(reviewsList));
+        } catch (e) {}
+        if (isRevEditing && revEditId === id) cancelEditReview();
+        renderAdminReviewsList(reviewsList);
+
+        // 2. Background Sync with Server
         try {
             const res = await authFetch(`${API_BASE}/api/reviews/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                if (isRevEditing && revEditId === id) cancelEditReview();
-                loadReviews();
-            } else {
+            if (!res.ok) {
                 const err = await res.json();
+                reviewsList = prevList;
+                try {
+                    sessionStorage.setItem('admin_reviews_cache', JSON.stringify(reviewsList));
+                } catch (e) {}
+                renderAdminReviewsList(reviewsList);
                 alert(err.error || 'Failed to delete review');
             }
         } catch (err) {
             console.error('Error deleting review:', err);
+            reviewsList = prevList;
+            try {
+                sessionStorage.setItem('admin_reviews_cache', JSON.stringify(reviewsList));
+            } catch (e) {}
+            renderAdminReviewsList(reviewsList);
+            alert('Server error deleting review.');
         }
     }
 
