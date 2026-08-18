@@ -1,17 +1,17 @@
 :root {
     --brand-font: 'Plus Jakarta Sans', sans-serif;
-    --section-gap: 3.5rem; /* ~56px on mobile */
+    --section-gap: 2rem; /* ~32px on mobile */
 }
 
 @media (min-width: 768px) {
     :root {
-        --section-gap: 5.5rem; /* ~88px on tablet */
+        --section-gap: 3rem; /* ~48px on tablet */
     }
 }
 
 @media (min-width: 1024px) {
     :root {
-        --section-gap: 7.5rem; /* ~120px on desktop */
+        --section-gap: 4rem; /* ~64px on desktop */
     }
 }
 
