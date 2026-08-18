@@ -6,36 +6,36 @@ document.addEventListener("DOMContentLoaded", () => {
         ? 'http://localhost:3000'
         : 'https://wow-moments-website-backend.onrender.com';
     // ----------------------------------------------------------------
-    // 1. WebGL Background Animation
+    // 1. WebGL Background Animation (Safely isolated for mobile)
     // ----------------------------------------------------------------
     (function () {
-        const canvas = document.getElementById('shader-canvas-ANIMATION_55');
-        if (!canvas) return;
+        try {
+            const canvas = document.getElementById('shader-canvas-ANIMATION_55');
+            if (!canvas) return;
 
-        // Sync the WebGL drawing-buffer size with the CSS-driven layout size.
-        // This fires on initial layout and whenever the element is resized.
-        function syncSize() {
-            const w = canvas.clientWidth || 1280;
-            const h = canvas.clientHeight || 720;
-            if (canvas.width !== w || canvas.height !== h) {
-                canvas.width = w;
-                canvas.height = h;
+            // Sync the WebGL drawing-buffer size with the CSS-driven layout size.
+            function syncSize() {
+                const w = canvas.clientWidth || 1280;
+                const h = canvas.clientHeight || 720;
+                if (canvas.width !== w || canvas.height !== h) {
+                    canvas.width = w;
+                    canvas.height = h;
+                }
             }
-        }
-        if (typeof ResizeObserver !== 'undefined') {
-            new ResizeObserver(syncSize).observe(canvas);
-        }
-        syncSize();
+            if (typeof ResizeObserver !== 'undefined') {
+                new ResizeObserver(syncSize).observe(canvas);
+            }
+            syncSize();
 
-        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        if (!gl) return;
-        const vs = `attribute vec2 a_position;
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (!gl) return;
+            const vs = `attribute vec2 a_position;
 varying vec2 v_texCoord;
 void main() {
   v_texCoord = a_position * 0.5 + 0.5;
   gl_Position = vec4(a_position, 0.0, 1.0);
 }`;
-        const fs = `precision highp float;
+            const fs = `precision mediump float;
 varying vec2 v_texCoord;
 uniform float u_time;
 uniform vec2 u_resolution;
@@ -68,50 +68,64 @@ void main() {
     
     gl_FragColor = vec4(finalColor, 0.15); // High transparency for background use
 }`;
-        function cs(type, src) {
-            const s = gl.createShader(type);
-            gl.shaderSource(s, src);
-            gl.compileShader(s);
-            return s;
-        }
-        const prog = gl.createProgram();
-        gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
-        gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
-        gl.linkProgram(prog);
-        gl.useProgram(prog);
-        const buf = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-        const pos = gl.getAttribLocation(prog, 'a_position');
-        gl.enableVertexAttribArray(pos);
-        gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
-        const uTime = gl.getUniformLocation(prog, 'u_time');
-        const uRes = gl.getUniformLocation(prog, 'u_resolution');
-        const uMouse = gl.getUniformLocation(prog, 'u_mouse');
-
-        // u_mouse is in pixel coordinates matching u_resolution (ShaderToy convention).
-        let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
-        window.addEventListener('mousemove', (event) => {
-            const rect = canvas.getBoundingClientRect();
-            if (rect.width && rect.height) {
-                const nx = (event.clientX - rect.left) / rect.width;
-                const ny = 1.0 - (event.clientY - rect.top) / rect.height;
-                mouse.x = nx * canvas.width;
-                mouse.y = ny * canvas.height;
+            function cs(type, src) {
+                const s = gl.createShader(type);
+                gl.shaderSource(s, src);
+                gl.compileShader(s);
+                return s;
             }
-        });
+            const prog = gl.createProgram();
+            gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
+            gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
+            gl.linkProgram(prog);
+            gl.useProgram(prog);
+            const buf = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+            const pos = gl.getAttribLocation(prog, 'a_position');
+            gl.enableVertexAttribArray(pos);
+            gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+            const uTime = gl.getUniformLocation(prog, 'u_time');
+            const uRes = gl.getUniformLocation(prog, 'u_resolution');
+            const uMouse = gl.getUniformLocation(prog, 'u_mouse');
 
-        function render(t) {
-            if (typeof ResizeObserver === 'undefined') syncSize();
-            gl.viewport(0, 0, canvas.width, canvas.height);
-            if (uTime) gl.uniform1f(uTime, t * 0.001);
-            if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
-            if (uMouse) gl.uniform2f(uMouse, mouse.x, mouse.y);
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-            requestAnimationFrame(render);
+            let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+            window.addEventListener('mousemove', (event) => {
+                const rect = canvas.getBoundingClientRect();
+                if (rect.width && rect.height) {
+                    const nx = (event.clientX - rect.left) / rect.width;
+                    const ny = 1.0 - (event.clientY - rect.top) / rect.height;
+                    mouse.x = nx * canvas.width;
+                    mouse.y = ny * canvas.height;
+                }
+            });
+
+            function render(t) {
+                if (typeof ResizeObserver === 'undefined') syncSize();
+                gl.viewport(0, 0, canvas.width, canvas.height);
+                if (uTime) gl.uniform1f(uTime, t * 0.001);
+                if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
+                if (uMouse) gl.uniform2f(uMouse, mouse.x, mouse.y);
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                requestAnimationFrame(render);
+            }
+            render(0);
+        } catch (e) {
+            console.warn('WebGL shader background fallback:', e);
         }
-        render(0);
     })();
+
+    // ----------------------------------------------------------------
+    // Safe LocalStorage Helper (Prevents mobile private mode errors)
+    // ----------------------------------------------------------------
+    const safeStorage = {
+        getItem: (key) => {
+            try { return localStorage.getItem(key); } catch (e) { return null; }
+        },
+        setItem: (key, val) => {
+            try { localStorage.setItem(key, val); } catch (e) {}
+        }
+    };
 
     // ----------------------------------------------------------------
     // 2. CMS Simulation: Load and Render Templates
@@ -119,7 +133,7 @@ void main() {
     const grid = document.getElementById('templates-grid');
     if (grid) {
         let templates = [];
-        const TEMPLATES_CACHE_KEY = 'wow_templates_cache_v3';
+        const TEMPLATES_CACHE_KEY = 'wow_templates_cache_v4';
 
         function generateWALink(name, price) {
             const baseUrl = "https://wa.me/918609539322";
@@ -130,6 +144,10 @@ void main() {
         function renderTemplates(filteredList) {
             if (!grid) return;
             grid.innerHTML = '';
+            if (!filteredList || filteredList.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400 font-medium">No templates found in this category.</div>';
+                return;
+            }
             filteredList.forEach((t, idx) => {
                 const card = document.createElement('div');
                 card.className = "template-card glass-card review-card rounded-[2rem] overflow-hidden flex flex-col p-2 group";
@@ -225,7 +243,7 @@ void main() {
         }
 
         // Instant local cache display for 0ms page load
-        let cachedTemplatesRaw = localStorage.getItem(TEMPLATES_CACHE_KEY);
+        let cachedTemplatesRaw = safeStorage.getItem(TEMPLATES_CACHE_KEY);
         if (cachedTemplatesRaw) {
             try {
                 const parsed = JSON.parse(cachedTemplatesRaw);
@@ -238,33 +256,47 @@ void main() {
             }
         }
 
-        // Fetch fresh templates from API (stale-while-revalidate)
-        async function fetchTemplates() {
+        // Fetch fresh templates from API (stale-while-revalidate with auto-retry)
+        async function fetchTemplates(retryCount = 0) {
             try {
                 if (!templates || templates.length === 0) {
                     renderSkeletonLoading(3);
                 }
                 const response = await fetch(`${API_BASE}/api/templates`);
-                if (!response.ok) throw new Error('Network response was not ok');
+                if (!response.ok) throw new Error('HTTP status ' + response.status);
                 const freshTemplates = await response.json();
                 
-                const freshStr = JSON.stringify(freshTemplates);
-                if (freshStr !== cachedTemplatesRaw || !templates || templates.length === 0) {
+                if (Array.isArray(freshTemplates) && freshTemplates.length > 0) {
                     templates = freshTemplates;
-                    cachedTemplatesRaw = freshStr;
-                    localStorage.setItem(TEMPLATES_CACHE_KEY, freshStr);
+                    const freshStr = JSON.stringify(freshTemplates);
+                    safeStorage.setItem(TEMPLATES_CACHE_KEY, freshStr);
                     
                     if (currentCategory === 'all') {
                         renderTemplates(templates);
                     } else {
                         const filtered = templates.filter(t => t.categories && t.categories.includes(currentCategory));
-                        renderTemplates(filtered);
+                        renderTemplates(filtered.length > 0 ? filtered : templates);
                     }
+                } else if (!templates || templates.length === 0) {
+                    grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400 font-medium">No templates available.</div>';
                 }
             } catch (err) {
                 console.error('Error loading templates:', err);
-                if (!templates || templates.length === 0) {
-                    grid.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500 font-medium">Failed to load templates. Please try again later.</div>';
+                // If failed and no cached templates, auto-retry once after 2.5 seconds
+                if ((!templates || templates.length === 0) && retryCount < 2) {
+                    setTimeout(() => fetchTemplates(retryCount + 1), 2500);
+                } else if (!templates || templates.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-span-full flex flex-col items-center justify-center py-12 gap-3 text-center">
+                            <span class="material-symbols-outlined text-primary text-3xl">cloud_off</span>
+                            <p class="text-sm font-semibold text-gray-600">Connecting to server...</p>
+                            <button id="retry-templates-btn" class="px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold shadow-sm active:scale-95 transition-all">Tap to Retry</button>
+                        </div>
+                    `;
+                    const retryBtn = document.getElementById('retry-templates-btn');
+                    if (retryBtn) {
+                        retryBtn.addEventListener('click', () => fetchTemplates(0));
+                    }
                 }
             }
         }
@@ -540,8 +572,8 @@ void main() {
             updateArrows();
         }
 
-        const REVIEWS_CACHE_KEY = 'wow_reviews_cache_v3';
-        let cachedReviewsRaw = localStorage.getItem(REVIEWS_CACHE_KEY);
+        const REVIEWS_CACHE_KEY = 'wow_reviews_cache_v4';
+        let cachedReviewsRaw = safeStorage.getItem(REVIEWS_CACHE_KEY);
         if (cachedReviewsRaw) {
             try {
                 const parsed = JSON.parse(cachedReviewsRaw);
@@ -557,10 +589,9 @@ void main() {
                 const res = await fetch(`${API_BASE}/api/reviews`);
                 if (!res.ok) throw new Error();
                 const freshReviews = await res.json();
-                const freshStr = JSON.stringify(freshReviews);
-                if (freshStr !== cachedReviewsRaw) {
-                    cachedReviewsRaw = freshStr;
-                    localStorage.setItem(REVIEWS_CACHE_KEY, freshStr);
+                if (Array.isArray(freshReviews) && freshReviews.length > 0) {
+                    const freshStr = JSON.stringify(freshReviews);
+                    safeStorage.setItem(REVIEWS_CACHE_KEY, freshStr);
                     renderReviewsList(freshReviews);
                 }
             } catch (err) {
