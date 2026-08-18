@@ -610,30 +610,30 @@ void main() {
 
             reviews.forEach(r => {
                 const card = document.createElement('div');
-                card.className = "flex-none w-80 md:w-96 glass-card review-card p-6 md:p-8 rounded-[2rem] flex flex-col h-auto self-start";
-                card.style.scrollSnapAlign = "start";
+                card.className = "flex-none w-[82vw] max-w-[340px] sm:w-80 md:w-96 glass-card review-card p-5 sm:p-6 md:p-8 rounded-[1.8rem] sm:rounded-[2rem] flex flex-col h-auto self-start break-words";
+                card.style.scrollSnapAlign = "center";
 
                 // Avatar selection (image or initials fallback)
                 let avatarHtml;
                 if (r.avatar) {
-                    avatarHtml = `<img class="w-12 h-12 rounded-full object-cover bg-gray-50 flex-shrink-0 shadow-sm" src="${r.avatar}" alt="${r.name}">`;
+                    avatarHtml = `<img class="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover bg-gray-50 flex-shrink-0 shadow-xs ring-2 ring-white/80" src="${r.avatar}" alt="${r.name}">`;
                 } else {
                     const initials = r.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-                    avatarHtml = `<div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm tracking-wider uppercase flex-shrink-0 shadow-sm">${initials}</div>`;
+                    avatarHtml = `<div class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs sm:text-sm tracking-wider uppercase flex-shrink-0 shadow-xs ring-2 ring-white/80">${initials}</div>`;
                 }
 
                 card.innerHTML = `
-                    <div class="flex items-center gap-3.5 mb-3 flex-shrink-0">
+                    <div class="flex items-center gap-3 mb-3 flex-shrink-0">
                         ${avatarHtml}
                         <div class="flex-1 min-w-0">
-                            <p class="font-bold text-base text-gray-900 leading-snug truncate">${r.name}</p>
-                            ${r.location ? `<p class="text-xs text-primary uppercase font-bold tracking-widest mt-0.5">${r.location}</p>` : ''}
+                            <p class="font-bold text-sm sm:text-base text-gray-900 leading-snug truncate">${r.name}</p>
+                            ${r.location ? `<p class="text-[10px] sm:text-xs text-primary uppercase font-bold tracking-widest mt-0.5 truncate">${r.location}</p>` : ''}
                         </div>
                     </div>
-                    <div class="flex gap-1 text-yellow-500 mb-4 flex-shrink-0">
+                    <div class="flex gap-1 text-yellow-500 mb-3 flex-shrink-0">
                         ${renderStars(r.rating)}
                     </div>
-                    <p class="italic text-on-surface-variant font-body-md leading-relaxed whitespace-pre-line">"${r.comment}"</p>
+                    <p class="italic text-on-surface-variant font-body-md text-xs sm:text-sm md:text-base leading-relaxed break-words whitespace-pre-line">"${r.comment}"</p>
                 `;
                 container.appendChild(card);
             });
@@ -691,14 +691,18 @@ void main() {
 
         // Scroll functionality
         if (prevBtn && nextBtn) {
+            const getScrollAmount = () => {
+                const firstCard = container.querySelector('.review-card');
+                return firstCard ? firstCard.offsetWidth + 24 : 320;
+            };
             prevBtn.addEventListener('click', () => {
-                container.scrollBy({ left: -320, behavior: 'smooth' });
+                container.scrollBy({ left: -getScrollAmount(), behavior: 'smooth' });
             });
             nextBtn.addEventListener('click', () => {
-                container.scrollBy({ left: 320, behavior: 'smooth' });
+                container.scrollBy({ left: getScrollAmount(), behavior: 'smooth' });
             });
 
-            container.addEventListener('scroll', updateArrows);
+            container.addEventListener('scroll', updateArrows, { passive: true });
         }
 
         function updateArrows() {
