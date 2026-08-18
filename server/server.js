@@ -75,7 +75,13 @@ mongoose.connection.on('error', (err) => {
 });
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+app.options('*', cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -256,33 +262,39 @@ app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     if (username === ADMIN_USERNAME && bcrypt.compareSync(password, ADMIN_PASSWORD_HASH)) {
         const token = jwt.sign({ isAdmin: true, username: ADMIN_USERNAME }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+        const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https' || process.env.NODE_ENV === 'production';
         res.cookie('admin_token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            secure: isHttps,
+            sameSite: isHttps ? 'none' : 'lax',
             maxAge: 14 * 24 * 60 * 60 * 1000
         });
-        res.json({ success: true, message: 'Logged in successfully' });
+        res.json({ success: true, message: 'Logged in successfully', token, isAdmin: true });
     } else {
         res.status(400).json({ success: false, error: 'Invalid username or password' });
     }
 });
 
 app.post('/api/logout', (req, res) => {
+    const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https' || process.env.NODE_ENV === 'production';
     res.clearCookie('admin_token', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+        secure: isHttps,
+        sameSite: isHttps ? 'none' : 'lax'
     });
     res.json({ success: true, message: 'Logged out successfully' });
 });
 
 app.get('/api/check-auth', (req, res) => {
     let token = req.cookies && req.cookies.admin_token;
+    if (!token && req.headers.authorization) {
+        const parts = req.headers.authorization.split(' ');
+        if (parts.length === 2 && parts[0] === 'Bearer') token = parts[1];
+    }
     if (!token) return res.json({ isAdmin: false });
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        res.json({ isAdmin: !!decoded.isAdmin });
+        res.json({ isAdmin: !!decoded.isAdmin, username: decoded.username });
     } catch {
         res.json({ isAdmin: false });
     }

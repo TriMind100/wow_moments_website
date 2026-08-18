@@ -18,15 +18,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const templatesCount = document.getElementById('templates-count');
 
     // ----------------------------------------------------
+    // Authenticated Fetch Helper
+    // Sends credentials (cookies) and Authorization Bearer header
+    // ----------------------------------------------------
+    async function authFetch(url, options = {}) {
+        const token = localStorage.getItem('admin_token');
+        const headers = options.headers ? { ...options.headers } : {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const res = await fetch(url, {
+            ...options,
+            credentials: 'include',
+            headers
+        });
+
+        if (res.status === 401) {
+            localStorage.removeItem('admin_token');
+            showLogin();
+        }
+
+        return res;
+    }
+
+    // ----------------------------------------------------
     // Authentication Check
     // ----------------------------------------------------
     async function checkAuth() {
+        const token = localStorage.getItem('admin_token');
         try {
-            const response = await fetch(`${API_BASE}/api/check-auth`);
+            const headers = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            const response = await fetch(`${API_BASE}/api/check-auth`, {
+                credentials: 'include',
+                headers
+            });
             const data = await response.json();
             if (data.isAdmin) {
                 showDashboard();
             } else {
+                localStorage.removeItem('admin_token');
                 showLogin();
             }
         } catch (err) {
@@ -63,12 +95,16 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`${API_BASE}/api/login`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
 
             const data = await response.json();
             if (response.ok && data.success) {
+                if (data.token) {
+                    localStorage.setItem('admin_token', data.token);
+                }
                 showDashboard();
                 loginForm.reset();
             } else {
@@ -83,10 +119,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     logoutBtn.addEventListener('click', async () => {
         try {
-            await fetch(`${API_BASE}/api/logout`, { method: 'POST' });
-            showLogin();
+            await authFetch(`${API_BASE}/api/logout`, { method: 'POST' });
         } catch (err) {
             console.error('Logout error:', err);
+        } finally {
+            localStorage.removeItem('admin_token');
+            showLogin();
         }
     });
 
@@ -95,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     async function loadTemplates() {
         try {
-            const response = await fetch(`${API_BASE}/api/templates`);
+            const response = await authFetch(`${API_BASE}/api/templates`);
             const templates = await response.json();
             renderTemplatesList(templates);
         } catch (err) {
@@ -234,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deleteTemplate(id) {
         try {
-            const response = await fetch(`${API_BASE}/api/templates/${id}`, {
+            const response = await authFetch(`${API_BASE}/api/templates/${id}`, {
                 method: 'DELETE'
             });
 
@@ -289,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const method = isEditing ? 'PUT' : 'POST';
 
         try {
-            const response = await fetch(url, {
+            const response = await authFetch(url, {
                 method: method,
                 body: formData
             });
@@ -472,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saleApplyBtn.textContent = 'Applying…';
 
         try {
-            const res = await fetch(`${API_BASE}/api/sales/run`, {
+            const res = await authFetch(`${API_BASE}/api/sales/run`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -504,7 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saleClearAllBtn.textContent = 'Clearing…';
 
         try {
-            const res = await fetch(`${API_BASE}/api/sales/clear`, {
+            const res = await authFetch(`${API_BASE}/api/sales/clear`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({})
@@ -593,7 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
     /** Load existing banner from API and populate the form / badge */
     async function loadBannerState() {
         try {
-            const res = await fetch(`${API_BASE}/api/banner`);
+            const res = await authFetch(`${API_BASE}/api/banner`);
             const data = await res.json();
             if (data.active) {
                 setBannerPreviewImage(data.image);
@@ -628,7 +666,7 @@ document.addEventListener('DOMContentLoaded', () => {
     /** Deactivate banner via API */
     async function deactivateBanner(silent = false) {
         try {
-            const res = await fetch(`${API_BASE}/api/banner`, { method: 'DELETE' });
+            const res = await authFetch(`${API_BASE}/api/banner`, { method: 'DELETE' });
             if (res.ok) {
                 bannerLiveBadge.classList.add('hidden');
                 bannerLiveBadge.classList.remove('flex');
@@ -718,7 +756,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('ctaText', bannerCtaText.value.trim() || 'Shop Sale');
             formData.append('ctaLink', bannerCtaLink.value.trim() || '#templates');
 
-            const res  = await fetch(`${API_BASE}/api/banner`, { method: 'POST', body: formData });
+            const res  = await authFetch(`${API_BASE}/api/banner`, { method: 'POST', body: formData });
             const data = await res.json();
 
             if (res.ok) {
@@ -767,7 +805,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadReviews() {
         if (!adminReviewsList) return;
         try {
-            const response = await fetch(`${API_BASE}/api/reviews/admin`);
+            const response = await authFetch(`${API_BASE}/api/reviews/admin`);
             if (response.ok) {
                 reviewsList = await response.json();
                 renderAdminReviewsList(reviewsList);
@@ -877,7 +915,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (review.avatar) formData.append('avatarUrl', review.avatar);
             formData.append('status', newStatus);
 
-            const res = await fetch(`${API_BASE}/api/reviews/${review.id}`, {
+            const res = await authFetch(`${API_BASE}/api/reviews/${review.id}`, {
                 method: 'PUT',
                 body: formData
             });
@@ -935,7 +973,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deleteReview(id) {
         try {
-            const res = await fetch(`${API_BASE}/api/reviews/${id}`, { method: 'DELETE' });
+            const res = await authFetch(`${API_BASE}/api/reviews/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 if (isRevEditing && revEditId === id) cancelEditReview();
                 loadReviews();
@@ -971,7 +1009,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const method = isRevEditing ? 'PUT' : 'POST';
 
             try {
-                const res = await fetch(url, {
+                const res = await authFetch(url, {
                     method: method,
                     body: formData
                 });
@@ -1006,7 +1044,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadInvites() {
         if (!invitesTableBody) return;
         try {
-            const res = await fetch(`${API_BASE}/api/reviews/invites`);
+            const res = await authFetch(`${API_BASE}/api/reviews/invites`);
             if (res.ok) {
                 const invites = await res.json();
                 renderInvitesList(invites);
@@ -1095,7 +1133,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function createInvite(type) {
         try {
-            const res = await fetch(`${API_BASE}/api/reviews/invites`, {
+            const res = await authFetch(`${API_BASE}/api/reviews/invites`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type })
@@ -1113,7 +1151,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deleteInvite(token) {
         try {
-            const res = await fetch(`${API_BASE}/api/reviews/invites/${token}`, {
+            const res = await authFetch(`${API_BASE}/api/reviews/invites/${token}`, {
                 method: 'DELETE'
             });
             if (res.ok) {
