@@ -1167,12 +1167,9 @@
     </section>
     <!-- Reviews Section -->
     <section class="py-section-gap bg-surface/30 px-gutter overflow-hidden reveal-anim" id="reviews">
-        <div class="max-w-container-max mx-auto text-center mb-16 relative">
+        <div class="max-w-container-max mx-auto text-center mb-12 md:mb-16 relative">
             <h2 class="text-4xl md:text-5xl font-extrabold mb-4 brand-font">Hearts We've Touched</h2>
-            <p class="text-on-surface-variant mb-6">Don't take our word for it—listen to our happy customers.</p>
-            <button id="write-review-btn" class="px-6 py-2.5 rounded-full border border-primary text-primary hover:bg-primary/5 font-extrabold text-sm transition-all duration-200 active:scale-95 flex items-center gap-2 mx-auto shadow-sm">
-                <span class="material-symbols-outlined text-lg">rate_review</span> Write a Review
-            </button>
+            <p class="text-on-surface-variant text-base md:text-lg">Don't take our word for it—listen to our happy customers.</p>
         </div>
         
         <!-- Horizontal scroll wrapper -->
@@ -1439,60 +1436,6 @@
             <span class="text-[10px] mt-1">WhatsApp</span>
         </a>
     </nav>
-
-    <!-- Write Review Modal Overlay -->
-    <div id="review-modal-overlay" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-        <div class="glass-card bg-white/95 rounded-[2.5rem] w-full max-w-lg p-8 mx-4 border border-white/50 shadow-2xl relative transform translate-y-8 transition-transform duration-300" id="review-modal-card">
-            <!-- Close Button -->
-            <button id="review-modal-close" class="absolute top-6 right-6 w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-all duration-200 active:scale-90">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-            
-            <h3 class="text-3xl font-extrabold mb-2 brand-font">Write a Review</h3>
-            <p class="text-on-surface-variant text-sm mb-6">Share your experience with us and help others find the perfect gift.</p>
-            
-            <form id="public-review-form" class="space-y-4" enctype="multipart/form-data">
-                <div>
-                    <label for="review-name" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Your Name</label>
-                    <input type="text" id="review-name" name="name" required placeholder="e.g. Rahul Verma" class="w-full rounded-2xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm">
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="review-location" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Your Location</label>
-                        <input type="text" id="review-location" name="location" placeholder="e.g. Delhi" class="w-full rounded-2xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm">
-                    </div>
-                    <div>
-                        <label for="review-rating" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Rating</label>
-                        <select id="review-rating" name="rating" required class="w-full rounded-2xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm">
-                            <option value="5">⭐⭐⭐⭐⭐ (5 Stars)</option>
-                            <option value="4">⭐⭐⭐⭐ (4 Stars)</option>
-                            <option value="3">⭐⭐⭐ (3 Stars)</option>
-                            <option value="2">⭐⭐ (2 Stars)</option>
-                            <option value="1">⭐ (1 Star)</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div>
-                    <label for="review-comment" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Your Feedback</label>
-                    <textarea id="review-comment" name="comment" rows="3" required placeholder="Tell us what you liked about our gift templates..." class="w-full rounded-2xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm"></textarea>
-                </div>
-                
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Profile Photo (Optional)</label>
-                    <input type="file" id="review-avatar-file" name="avatarFile" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
-                </div>
-                
-                <div id="review-form-error" class="text-xs text-red-600 font-semibold hidden"></div>
-                <div id="review-form-success" class="text-xs text-green-600 font-semibold hidden"></div>
-                
-                <button type="submit" id="review-form-submit" class="w-full py-3.5 rounded-2xl btn-gradient text-white font-bold shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 text-sm mt-2">
-                    <span class="material-symbols-outlined text-lg">send</span> Submit Review
-                </button>
-            </form>
-        </div>
-    </div>
 
     <script src="script.js" defer></script>
 </body>

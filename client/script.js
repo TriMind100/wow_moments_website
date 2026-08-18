@@ -573,18 +573,12 @@ void main() {
     })();
 
     // ----------------------------------------------------------------
-    // 7. Dynamic Reviews System (Carousel & Submission)
+    // 7. Dynamic Reviews System (Carousel)
     // ----------------------------------------------------------------
     (async function initReviewsSystem() {
         const container = document.getElementById('reviews-container');
         const prevBtn = document.getElementById('reviews-prev');
         const nextBtn = document.getElementById('reviews-next');
-        const writeBtn = document.getElementById('write-review-btn');
-        const modalOverlay = document.getElementById('review-modal-overlay');
-        const modalClose = document.getElementById('review-modal-close');
-        const form = document.getElementById('public-review-form');
-        const formError = document.getElementById('review-form-error');
-        const formSuccess = document.getElementById('review-form-success');
 
         if (!container) return;
 
@@ -756,78 +750,7 @@ void main() {
             nextBtn.disabled = scrollLeft >= maxScroll - 5;
         }
 
-        // Modal triggers
-        if (writeBtn && modalOverlay && modalClose) {
-            writeBtn.addEventListener('click', () => {
-                modalOverlay.classList.add('visible');
-                document.body.style.overflow = 'hidden';
-                formError.classList.add('hidden');
-                formSuccess.classList.add('hidden');
-                form.reset();
-            });
-
-            const closeModal = () => {
-                modalOverlay.classList.remove('visible');
-                document.body.style.overflow = '';
-            };
-
-            modalClose.addEventListener('click', closeModal);
-            modalOverlay.addEventListener('click', (e) => {
-                if (e.target === modalOverlay) closeModal();
-            });
-
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && modalOverlay.classList.contains('visible')) {
-                    closeModal();
-                }
-            });
-        }
-
-        // Submit public review form
-        if (form) {
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                formError.classList.add('hidden');
-                formSuccess.classList.add('hidden');
-
-                const submitBtn = document.getElementById('review-form-submit');
-                submitBtn.disabled = true;
-                const originalText = submitBtn.innerHTML;
-                submitBtn.innerHTML = `<span class="material-symbols-outlined animate-spin text-lg">sync</span> Submitting...`;
-
-                const formData = new FormData(form);
-
-                try {
-                    const response = await fetch(`${API_BASE}/api/reviews`, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    const data = await response.json();
-                    if (response.ok) {
-                        formSuccess.textContent = "Thank you! Your review has been submitted for admin approval.";
-                        formSuccess.classList.remove('hidden');
-                        form.reset();
-                        setTimeout(() => {
-                            modalOverlay.classList.remove('visible');
-                            document.body.style.overflow = '';
-                            fetchReviews(); // refetch reviews in case it's auto-approved
-                        }, 2000);
-                    } else {
-                        formError.textContent = data.error || 'Failed to submit review';
-                        formError.classList.remove('hidden');
-                    }
-                } catch (err) {
-                    formError.textContent = 'Server error. Failed to submit review.';
-                    formError.classList.remove('hidden');
-                } finally {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalText;
-                }
-            });
-        }
-
-        // Load reviews initially
+        // Initial fetch
         fetchReviews();
 
         // ─── Active Navigation Styling & Scrollspy ────────────────────────────────
