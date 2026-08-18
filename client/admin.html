@@ -451,6 +451,52 @@
             </div>
 
             <!-- ══════════════════════════════════════════════════════════════
+                 REVIEW INVITATION LINKS SECTION
+            ══════════════════════════════════════════════════════════════ -->
+            <div class="glass-card rounded-[2rem] p-6 shadow-lg border bg-white/75 mt-8">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl btn-gradient flex items-center justify-center shadow-md flex-shrink-0">
+                            <span class="material-symbols-outlined text-white text-xl">link</span>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-extrabold text-gray-900 leading-tight">Review Request Links</h2>
+                            <p class="text-xs text-gray-500 mt-0.5">Generate secure single-use or multi-use invitation links to share with customers.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="btn-gen-single-invite" class="px-4 py-2 rounded-xl btn-gradient text-white text-xs font-bold shadow-sm hover:shadow-md active:scale-95 duration-150 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">person_add</span> Gen Single-Use Link
+                        </button>
+                        <button id="btn-gen-multi-invite" class="px-4 py-2 rounded-xl border border-primary text-primary hover:bg-primary/5 text-xs font-bold active:scale-95 duration-150 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">group_add</span> Gen Multi-Use Link
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Invites Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="border-b border-gray-100 text-gray-400 font-bold uppercase tracking-wider">
+                                <th class="py-3 px-4">Invite Link</th>
+                                <th class="py-3 px-4">Type</th>
+                                <th class="py-3 px-4">Status</th>
+                                <th class="py-3 px-4 text-center">Submissions</th>
+                                <th class="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invites-table-body" class="divide-y divide-gray-50">
+                            <!-- Populated dynamically -->
+                            <tr>
+                                <td colspan="5" class="py-6 text-center text-gray-400">Loading invitation links...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════════
                  REVIEWS MANAGEMENT SECTION
             ══════════════════════════════════════════════════════════════ -->
             <div class="glass-card rounded-[2rem] p-6 shadow-lg border bg-white/75 mt-8">

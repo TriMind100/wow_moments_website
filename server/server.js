@@ -10,6 +10,7 @@ const mongoose = require('mongoose');
 const Template = require('./models/Template');
 const Banner   = require('./models/Banner');
 const Review   = require('./models/Review');
+const ReviewInvite = require('./models/ReviewInvite');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -18,6 +19,13 @@ const PORT = process.env.PORT || 3000;
 // JWT secret — use env var in production
 const JWT_SECRET = process.env.JWT_SECRET || 'wow-moments-jwt-secret-12345';
 const JWT_EXPIRY = '14d';
+
+const bcrypt = require('bcryptjs');
+
+// Admin credentials loaded from environment variables (hidden in production)
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD_RAW = process.env.ADMIN_PASSWORD || 'Kolkode@123';
+const ADMIN_PASSWORD_HASH = bcrypt.hashSync(ADMIN_PASSWORD_RAW, 10);
 
 // ─── Database Connection (Cached for Serverless) ──────────────────────────────
 // On Vercel, each function invocation is stateless but the module may be reused.
@@ -89,6 +97,10 @@ app.get('/', (req, res) => {
 
 app.get('/admin.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/admin.html'));
+});
+
+app.get('/write-review.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/write-review.html'));
 });
 
 app.get('/robots.txt', (req, res) => {
@@ -191,6 +203,35 @@ function writeBannerFile(data) {
     fs.writeFileSync(BANNER_FILE, JSON.stringify(data, null, 2));
 }
 
+// ─── Invites file-based fallback ───────────────────────────────────────────────
+const INVITES_FILE = fs.existsSync(path.join(process.cwd(), 'data', 'invites.json'))
+    ? path.join(process.cwd(), 'data', 'invites.json')
+    : path.join(__dirname, 'data', 'invites.json');
+
+function readInvites() {
+    try {
+        if (!fs.existsSync(INVITES_FILE)) {
+            if (!process.env.VERCEL) {
+                fs.writeFileSync(INVITES_FILE, JSON.stringify([]));
+            } else {
+                console.warn('Fallback invites file not found on Vercel. Returning empty array.');
+                return [];
+            }
+        }
+        return JSON.parse(fs.readFileSync(INVITES_FILE, 'utf8'));
+    } catch (err) {
+        console.error('Error reading invites file:', err);
+        return [];
+    }
+}
+
+function writeInvites(invites) {
+    if (process.env.VERCEL) {
+        throw new Error('Filesystem is read-only on Vercel. MongoDB Atlas is required.');
+    }
+    fs.writeFileSync(INVITES_FILE, JSON.stringify(invites, null, 2));
+}
+
 // ─── Auth Middleware ──────────────────────────────────────────────────────────
 function requireAuth(req, res, next) {
     let token = req.cookies && req.cookies.admin_token;
@@ -213,8 +254,8 @@ function requireAuth(req, res, next) {
 // ─── API: Auth ────────────────────────────────────────────────────────────────
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
-    if (username === 'admin' && password === 'Kolkode@123') {
-        const token = jwt.sign({ isAdmin: true, username: 'admin' }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+    if (username === ADMIN_USERNAME && bcrypt.compareSync(password, ADMIN_PASSWORD_HASH)) {
+        const token = jwt.sign({ isAdmin: true, username: ADMIN_USERNAME }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
         res.cookie('admin_token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -730,6 +771,122 @@ app.delete('/api/banner', requireAuth, async (req, res) => {
     }
 });
 
+// ─── API: Review Invitations (Admin only / Public validation) ───────────────────
+
+// GET /api/reviews/invites - admin list all invites
+app.get('/api/reviews/invites', requireAuth, async (req, res) => {
+    try {
+        const mongoOk = await connectDB();
+        if (mongoOk && mongoose.connection.readyState === 1) {
+            const invites = await ReviewInvite.find().sort({ createdAt: -1 });
+            return res.json(invites);
+        }
+        res.json(readInvites().sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)));
+    } catch (err) {
+        console.error('Error getting invites:', err);
+        res.status(500).json({ error: 'Server error fetching invitations.' });
+    }
+});
+
+// POST /api/reviews/invites - admin create a new invite
+app.post('/api/reviews/invites', requireAuth, async (req, res) => {
+    try {
+        const { type } = req.body;
+        if (!type || !['single', 'multi'].includes(type)) {
+            return res.status(400).json({ error: 'Invalid invite type. Must be single or multi.' });
+        }
+
+        const token = 'rev-' + Math.random().toString(36).substring(2, 8) + Math.random().toString(36).substring(2, 8);
+        const inviteData = {
+            token,
+            type,
+            status: 'active',
+            submissions: 0,
+            createdAt: new Date()
+        };
+
+        const mongoOk = await connectDB();
+        if (mongoOk && mongoose.connection.readyState === 1) {
+            const newInvite = new ReviewInvite(inviteData);
+            await newInvite.save();
+            return res.status(201).json(newInvite);
+        }
+
+        if (process.env.VERCEL) {
+            return res.status(503).json({ error: 'Database not connected.' });
+        }
+
+        const invites = readInvites();
+        invites.push(inviteData);
+        writeInvites(invites);
+        res.status(201).json(inviteData);
+    } catch (err) {
+        console.error('Error creating invite:', err);
+        res.status(500).json({ error: 'Server error: ' + err.message });
+    }
+});
+
+// DELETE /api/reviews/invites/:token - admin delete/revoke an invite
+app.delete('/api/reviews/invites/:token', requireAuth, async (req, res) => {
+    try {
+        const { token } = req.params;
+        const mongoOk = await connectDB();
+        const useMongoNow = mongoOk && mongoose.connection.readyState === 1;
+
+        if (useMongoNow) {
+            const deleted = await ReviewInvite.findOneAndDelete({ token });
+            if (!deleted) return res.status(404).json({ error: 'Invitation not found' });
+            return res.json({ success: true, message: 'Invitation deleted' });
+        }
+
+        if (process.env.VERCEL) {
+            return res.status(503).json({ error: 'Database not connected.' });
+        }
+
+        const invites = readInvites();
+        const index = invites.findIndex(inv => inv.token === token);
+        if (index === -1) return res.status(404).json({ error: 'Invitation not found' });
+
+        invites.splice(index, 1);
+        writeInvites(invites);
+        res.json({ success: true, message: 'Invitation deleted' });
+    } catch (err) {
+        console.error('Error deleting invite:', err);
+        res.status(500).json({ error: 'Server error: ' + err.message });
+    }
+});
+
+// GET /api/reviews/verify-invite - public check if invite is valid
+app.get('/api/reviews/verify-invite', async (req, res) => {
+    try {
+        const { token } = req.query;
+        if (!token) return res.status(400).json({ valid: false, error: 'Token is required' });
+
+        const mongoOk = await connectDB();
+        const useMongoNow = mongoOk && mongoose.connection.readyState === 1;
+
+        let invite;
+        if (useMongoNow) {
+            invite = await ReviewInvite.findOne({ token });
+        } else {
+            invite = readInvites().find(inv => inv.token === token);
+        }
+
+        if (!invite) {
+            return res.status(404).json({ valid: false, error: 'Invalid invitation link.' });
+        }
+
+        if (invite.type === 'single' && invite.status === 'used') {
+            return res.status(400).json({ valid: false, error: 'This invitation link has already been used.' });
+        }
+
+        res.json({ valid: true, type: invite.type });
+    } catch (err) {
+        console.error('Error verifying invite:', err);
+        res.status(500).json({ valid: false, error: 'Server error verifying invitation.' });
+    }
+});
+
 // ─── API: Reviews ─────────────────────────────────────────────────────────────
 // GET /api/reviews - public approved reviews
 app.get('/api/reviews', async (req, res) => {
@@ -765,7 +922,7 @@ app.get('/api/reviews/admin', requireAuth, async (req, res) => {
 // POST /api/reviews - submit a new review (public or admin)
 app.post('/api/reviews', upload.single('avatarFile'), async (req, res) => {
     try {
-        const { name, rating, comment, location, avatarUrl, status } = req.body;
+        const { name, rating, comment, location, avatarUrl, status, token: inviteToken } = req.body;
         const score = parseInt(rating);
 
         if (!name || isNaN(score) || score < 1 || score > 5 || !comment) {
@@ -786,6 +943,26 @@ app.post('/api/reviews', upload.single('avatarFile'), async (req, res) => {
             } catch (err) {}
         }
 
+        const mongoOk = await connectDB();
+        const useMongoNow = mongoOk && mongoose.connection.readyState === 1;
+
+        // Validate invite token if provided
+        let validatedInvite = null;
+        if (inviteToken) {
+            if (useMongoNow) {
+                validatedInvite = await ReviewInvite.findOne({ token: inviteToken });
+            } else {
+                validatedInvite = readInvites().find(inv => inv.token === inviteToken);
+            }
+
+            if (!validatedInvite) {
+                return res.status(400).json({ error: 'Invalid invitation link.' });
+            }
+            if (validatedInvite.type === 'single' && validatedInvite.status === 'used') {
+                return res.status(400).json({ error: 'This invitation link has already been used.' });
+            }
+        }
+
         const id = 'r' + Date.now();
         let avatarPath = null;
         if (req.file) {
@@ -794,8 +971,8 @@ app.post('/api/reviews', upload.single('avatarFile'), async (req, res) => {
             avatarPath = avatarUrl;
         }
 
-        // If admin submits, default is 'approved', otherwise 'pending'
-        const reviewStatus = isAdmin ? (status || 'approved') : 'pending';
+        // If admin submits directly (without invite token), default is 'approved', otherwise 'pending'
+        const reviewStatus = (isAdmin && !inviteToken) ? (status || 'approved') : 'pending';
 
         const newReviewData = {
             id,
@@ -808,10 +985,19 @@ app.post('/api/reviews', upload.single('avatarFile'), async (req, res) => {
             createdAt: new Date()
         };
 
-        const mongoOk = await connectDB();
-        if (mongoOk && mongoose.connection.readyState === 1) {
+        if (useMongoNow) {
             const newReview = new Review(newReviewData);
             await newReview.save();
+
+            // Update token usage if validated
+            if (validatedInvite) {
+                if (validatedInvite.type === 'single') {
+                    await ReviewInvite.findOneAndUpdate({ token: inviteToken }, { $set: { status: 'used' }, $inc: { submissions: 1 } });
+                } else {
+                    await ReviewInvite.findOneAndUpdate({ token: inviteToken }, { $inc: { submissions: 1 } });
+                }
+            }
+
             return res.status(201).json(newReview);
         }
 
@@ -822,6 +1008,20 @@ app.post('/api/reviews', upload.single('avatarFile'), async (req, res) => {
         const reviews = readReviews();
         reviews.push(newReviewData);
         writeReviews(reviews);
+
+        // Update token usage if validated
+        if (validatedInvite) {
+            const invites = readInvites();
+            const idx = invites.findIndex(inv => inv.token === inviteToken);
+            if (idx !== -1) {
+                invites[idx].submissions += 1;
+                if (invites[idx].type === 'single') {
+                    invites[idx].status = 'used';
+                }
+                writeInvites(invites);
+            }
+        }
+
         res.status(201).json(newReviewData);
     } catch (err) {
         console.error('Error submitting review:', err);
@@ -925,6 +1125,42 @@ app.delete('/api/reviews/:id', requireAuth, async (req, res) => {
         res.status(500).json({ error: 'Server error: ' + err.message });
     }
 });
+
+// ─── API: Health Check & Self-Pinging (Render Keep-Alive) ──────────────────────
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'UP',
+        uptime: process.uptime(),
+        timestamp: new Date()
+    });
+});
+
+// Self-pinging mechanism (runs every 3 minutes)
+const HEALTH_CHECK_INTERVAL = 3 * 60 * 1000; // 3 minutes
+// If RENDER_EXTERNAL_URL is set, use it; otherwise ping locally to verify
+const serviceUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+
+if (serviceUrl) {
+    setInterval(() => {
+        try {
+            const https = require('https');
+            const http = require('http');
+            const client = serviceUrl.startsWith('https') ? https : http;
+
+            client.get(`${serviceUrl}/api/health`, (resp) => {
+                let data = '';
+                resp.on('data', (chunk) => { data += chunk; });
+                resp.on('end', () => {
+                    console.log(`[Health Keep-Alive] Self-ping successful at ${new Date().toISOString()}`);
+                });
+            }).on("error", (err) => {
+                console.error(`[Health Keep-Alive] Self-ping failed: ${err.message}`);
+            });
+        } catch (err) {
+            console.error('[Health Keep-Alive] Error during self-ping interval:', err.message);
+        }
+    }, HEALTH_CHECK_INTERVAL);
+}
 
 // ─── Start Server (Local Only) ────────────────────────────────────────────────
 if (!process.env.VERCEL) {

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Your Review | Wow Moments</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#b90a5a',
+                        secondary: '#9b3f5a',
+                        surface: '#fff8f8',
+                        'primary-container': '#ff4d8d',
+                        'on-primary-container': '#5b0028',
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Manrope', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #b90a5a 0%, #ff4d8d 100%);
+            box-shadow: 0 4px 15px rgba(185, 10, 90, 0.2);
+        }
+        .btn-gradient:hover {
+            box-shadow: 0 8px 25px rgba(185, 10, 90, 0.3);
+            filter: brightness(1.05);
+        }
+        .star-btn {
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.1s ease;
+        }
+        .star-btn:hover {
+            transform: scale(1.25);
+        }
+        /* Custom floating hearts backdrop */
+        .heart-bg-1 { animation: floatHeart 8s ease-in-out infinite alternate; }
+        .heart-bg-2 { animation: floatHeart 6s ease-in-out infinite alternate-reverse; }
+        @keyframes floatHeart {
+            0% { transform: translateY(0) rotate(0deg) scale(1); }
+            100% { transform: translateY(-20px) rotate(8deg) scale(1.1); }
+        }
+    </style>
+</head>
+<body class="bg-surface text-gray-800 min-h-screen flex flex-col justify-between font-sans relative overflow-x-hidden">
+    
+    <!-- Floating Background Elements -->
+    <div class="absolute top-[10%] left-[5%] w-12 h-12 text-primary/10 heart-bg-1 pointer-events-none z-0 select-none">
+        <span class="material-symbols-outlined text-5xl" style="font-variation-settings: 'FILL' 1;">favorite</span>
+    </div>
+    <div class="absolute bottom-[15%] right-[5%] w-16 h-16 text-primary/10 heart-bg-2 pointer-events-none z-0 select-none">
+        <span class="material-symbols-outlined text-6xl" style="font-variation-settings: 'FILL' 1;">favorite</span>
+    </div>
+
+    <!-- Header -->
+    <header class="w-full bg-white/40 backdrop-blur-md border-b border-white/20 py-4 px-6 z-10">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex flex-col">
+                <span class="text-lg font-extrabold tracking-tight text-primary leading-tight">Wow Moments</span>
+                <span class="text-[8px] text-gray-500 uppercase tracking-widest font-bold -mt-0.5">by KolKode</span>
+            </div>
+            <a href="/" class="text-xs font-bold text-gray-500 hover:text-primary transition-colors flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">home</span> Back to Home
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow flex items-center justify-center p-6 z-10">
+        <div class="w-full max-w-xl">
+            
+            <!-- 1. LOADING SCREEN -->
+            <div id="loading-state" class="glass-card rounded-[2.5rem] p-12 text-center shadow-xl border border-white/50 space-y-4">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary animate-pulse">
+                    <span class="material-symbols-outlined text-3xl animate-bounce">sync</span>
+                </div>
+                <h2 class="text-xl font-extrabold text-gray-900">Verifying Invite Link</h2>
+                <p class="text-sm text-gray-500 max-w-xs mx-auto">Please wait while we validate your review invitation token...</p>
+            </div>
+
+            <!-- 2. ERROR SCREEN (Invalid/Used Token) -->
+            <div id="error-state" class="hidden glass-card rounded-[2.5rem] p-10 text-center shadow-xl border border-white/50 space-y-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-600">
+                    <span class="material-symbols-outlined text-3xl">error</span>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Invalid Invitation Link</h2>
+                    <p id="error-message" class="text-sm text-gray-500 mt-2">This review invitation link has expired, been used, or is invalid.</p>
+                </div>
+                <div class="pt-2">
+                    <a href="/" class="inline-flex items-center justify-center px-6 py-3 rounded-full btn-gradient text-white font-bold text-sm tracking-wide transition-all active:scale-95 duration-200">
+                        Visit Wow Moments
+                    </a>
+                </div>
+            </div>
+
+            <!-- 3. REVIEW FORM SCREEN -->
+            <div id="form-state" class="hidden bg-white/75 glass-card rounded-[2.5rem] p-8 sm:p-10 shadow-xl border border-white/50 space-y-6">
+                <div class="text-center">
+                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/10 text-primary mb-3">
+                        <span class="material-symbols-outlined text-2xl">rate_review</span>
+                    </div>
+                    <h2 class="text-2xl font-black text-gray-900 tracking-tight leading-tight">Share Your Experience</h2>
+                    <p class="text-xs text-gray-500 mt-1">We would love to hear how Wow Moments helped you celebrate.</p>
+                </div>
+
+                <form id="review-submission-form" class="space-y-4" enctype="multipart/form-data">
+                    <!-- Hidden Token Input -->
+                    <input type="hidden" id="token-field" name="token">
+
+                    <!-- Name -->
+                    <div>
+                        <label for="name" class="block text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1">Your Name</label>
+                        <input type="text" id="name" name="name" required placeholder="e.g. Priyanjali Sen" class="w-full rounded-xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Location -->
+                        <div>
+                            <label for="location" class="block text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1">Location (Optional)</label>
+                            <input type="text" id="location" name="location" placeholder="e.g. Kolkata, India" class="w-full rounded-xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm">
+                        </div>
+
+                        <!-- Rating Selector -->
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1">Rating</label>
+                            <div class="flex items-center gap-1 h-9 mt-0.5" id="stars-container">
+                                <!-- Interactive Stars injected via JS -->
+                            </div>
+                            <input type="hidden" id="rating-val" name="rating" value="5" required>
+                        </div>
+                    </div>
+
+                    <!-- Comment -->
+                    <div>
+                        <label for="comment" class="block text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1">Your Feedback</label>
+                        <textarea id="comment" name="comment" rows="4" required placeholder="Tell us what you liked about your custom virtual gift or the experience..." class="w-full rounded-xl border-gray-200 focus:border-primary focus:ring-primary shadow-sm text-sm"></textarea>
+                    </div>
+
+                    <!-- Avatar Upload -->
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1">Your Photo (Optional)</label>
+                        <input type="file" id="avatarFile" name="avatarFile" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
+                        <span class="block text-[9px] text-gray-400 mt-1">Upload a profile photo to show next to your testimonial.</span>
+                    </div>
+
+                    <!-- Error Alert -->
+                    <div id="submit-error" class="hidden text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl p-3"></div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="submit-btn" class="w-full py-3.5 mt-2 rounded-xl btn-gradient text-white font-extrabold shadow-md active:scale-98 transition-all duration-200 flex items-center justify-center gap-2">
+                        Submit Testimonial
+                    </button>
+                </form>
+            </div>
+
+            <!-- 4. SUCCESS SCREEN -->
+            <div id="success-state" class="hidden glass-card rounded-[2.5rem] p-10 text-center shadow-xl border border-white/50 space-y-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 animate-pulse">
+                    <span class="material-symbols-outlined text-3xl">check_circle</span>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight">Thank You!</h2>
+                    <p class="text-sm text-gray-500 mt-2 max-w-xs mx-auto">Your testimonial has been submitted. It will appear on our website after moderation by our team.</p>
+                </div>
+                <div class="pt-2">
+                    <a href="/" class="inline-flex items-center justify-center px-6 py-3 rounded-full btn-gradient text-white font-bold text-sm tracking-wide transition-all active:scale-95 duration-200">
+                        Back to Home
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-6 text-xs text-gray-400 border-t border-gray-100 bg-white/20 backdrop-blur-sm z-10">
+        <p>&copy; 2026 Wow Moments by KolKode. All rights reserved.</p>
+    </footer>
+
+    <!-- Verification & Submission Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Find base API URL
+            const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === ''
+                ? 'http://localhost:3000'
+                : 'https://wow-moments-backend.onrender.com';
+
+            const loadingState = document.getElementById('loading-state');
+            const errorState = document.getElementById('error-state');
+            const formState = document.getElementById('form-state');
+            const successState = document.getElementById('success-state');
+            const errorMessage = document.getElementById('error-message');
+            const tokenField = document.getElementById('token-field');
+
+            // Parse URL Query Params
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token');
+
+            if (!token) {
+                showError('Review invitation link is missing token.');
+                return;
+            }
+
+            // Verify Invitation Token
+            async function verifyToken() {
+                try {
+                    const response = await fetch(`${API_BASE}/api/reviews/verify-invite?token=${encodeURIComponent(token)}`);
+                    const data = await response.json();
+                    
+                    if (response.ok && data.valid) {
+                        tokenField.value = token;
+                        showForm();
+                    } else {
+                        showError(data.error || 'This invitation link is invalid or expired.');
+                    }
+                } catch (err) {
+                    console.error('Error verifying token:', err);
+                    showError('Failed to connect to the verification server. Please try again.');
+                }
+            }
+
+            function showForm() {
+                loadingState.classList.add('hidden');
+                formState.classList.remove('hidden');
+                setupStars();
+            }
+
+            function showError(msg) {
+                errorMessage.textContent = msg;
+                loadingState.classList.add('hidden');
+                errorState.classList.remove('hidden');
+            }
+
+            // Setup Interactive Stars
+            const ratingVal = document.getElementById('rating-val');
+            const starsContainer = document.getElementById('stars-container');
+            const hoverLabels = ["Terrible", "Poor", "Average", "Very Good", "Excellent"];
+
+            let selectedRating = 5;
+
+            function setupStars() {
+                starsContainer.innerHTML = '';
+                for (let i = 1; i <= 5; i++) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'star-btn text-2xl text-yellow-500 focus:outline-none';
+                    btn.dataset.value = i;
+                    btn.innerHTML = `<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>`;
+                    
+                    btn.addEventListener('click', () => {
+                        selectedRating = i;
+                        ratingVal.value = i;
+                        updateStars();
+                    });
+
+                    btn.addEventListener('mouseenter', () => {
+                        highlightStars(i);
+                    });
+
+                    btn.addEventListener('mouseleave', () => {
+                        highlightStars(selectedRating);
+                    });
+
+                    starsContainer.appendChild(btn);
+                }
+                updateStars();
+            }
+
+            function highlightStars(val) {
+                const buttons = starsContainer.querySelectorAll('.star-btn');
+                buttons.forEach((btn, index) => {
+                    const span = btn.querySelector('span');
+                    if (index < val) {
+                        span.style.fontVariationSettings = "'FILL' 1";
+                    } else {
+                        span.style.fontVariationSettings = "'FILL' 0";
+                    }
+                });
+            }
+
+            function updateStars() {
+                highlightStars(selectedRating);
+            }
+
+            // Submit Form Handler
+            const form = document.getElementById('review-submission-form');
+            const submitBtn = document.getElementById('submit-btn');
+            const submitError = document.getElementById('submit-error');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                submitError.classList.add('hidden');
+                submitBtn.disabled = true;
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">sync</span> Submitting...`;
+
+                const formData = new FormData(form);
+
+                try {
+                    const response = await fetch(`${API_BASE}/api/reviews`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        formState.classList.add('hidden');
+                        successState.classList.remove('hidden');
+                    } else {
+                        submitError.textContent = data.error || 'Failed to submit review.';
+                        submitError.classList.remove('hidden');
+                    }
+                } catch (err) {
+                    console.error('Error submitting review:', err);
+                    submitError.textContent = 'Server connection error. Please try again.';
+                    submitError.classList.remove('hidden');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            });
+
+            // Start verification flow
+            verifyToken();
+        });
+    </script>
+</body>
+</html>

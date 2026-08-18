@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
         logoutBtn.classList.remove('hidden');
         loadTemplates();
         loadReviews();
+        loadInvites();
     }
 
     function showLogin() {
@@ -993,6 +994,144 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitBtn.textContent = originalText;
             }
         });
+    }
+
+    // ----------------------------------------------------------------
+    // Review Invitation Links
+    // ----------------------------------------------------------------
+    const btnGenSingle = document.getElementById('btn-gen-single-invite');
+    const btnGenMulti = document.getElementById('btn-gen-multi-invite');
+    const invitesTableBody = document.getElementById('invites-table-body');
+
+    async function loadInvites() {
+        if (!invitesTableBody) return;
+        try {
+            const res = await fetch(`${API_BASE}/api/reviews/invites`);
+            if (res.ok) {
+                const invites = await res.json();
+                renderInvitesList(invites);
+            }
+        } catch (err) {
+            console.error('Error loading invites:', err);
+        }
+    }
+
+    function renderInvitesList(invites) {
+        invitesTableBody.innerHTML = '';
+        if (invites.length === 0) {
+            invitesTableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="py-6 text-center text-gray-400">No active review request links. Generate one above!</td>
+                </tr>
+            `;
+            return;
+        }
+
+        invites.forEach(inv => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-gray-50 hover:bg-gray-50/50 transition-colors';
+
+            const inviteUrl = `${window.location.origin}/write-review.html?token=${inv.token}`;
+
+            const isUsed = inv.status === 'used';
+            const statusBadge = isUsed
+                ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-400 border border-gray-200">Used / Expired</span>`
+                : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200">Active</span>`;
+
+            const typeBadge = inv.type === 'single'
+                ? `<span class="text-xs text-gray-600 font-medium">Single-Use</span>`
+                : `<span class="text-xs text-[#b90a5a] font-bold">Multi-Use</span>`;
+
+            tr.innerHTML = `
+                <td class="py-3.5 px-4 font-mono text-[10px] text-gray-500 max-w-[200px] sm:max-w-[300px] truncate select-all" title="${inviteUrl}">
+                    ${inviteUrl}
+                </td>
+                <td class="py-3.5 px-4">${typeBadge}</td>
+                <td class="py-3.5 px-4">${statusBadge}</td>
+                <td class="py-3.5 px-4 text-center font-bold text-gray-700">${inv.submissions || 0}</td>
+                <td class="py-3.5 px-4 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                        <button data-url="${inviteUrl}" class="copy-invite-btn px-2.5 py-1 rounded-lg bg-primary/5 hover:bg-primary/10 text-primary text-[10px] font-bold flex items-center gap-1 transition-all duration-150 active:scale-95">
+                            <span class="material-symbols-outlined text-[12px]">content_copy</span>
+                            Copy
+                        </button>
+                        <button data-token="${inv.token}" class="delete-invite-btn w-7 h-7 rounded-full bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-all duration-150 active:scale-95">
+                            <span class="material-symbols-outlined text-sm">delete</span>
+                        </button>
+                    </div>
+                </td>
+            `;
+            invitesTableBody.appendChild(tr);
+        });
+
+        // Copy button listeners
+        invitesTableBody.querySelectorAll('.copy-invite-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const url = btn.getAttribute('data-url');
+                navigator.clipboard.writeText(url).then(() => {
+                    const origText = btn.innerHTML;
+                    btn.innerHTML = `<span class="material-symbols-outlined text-[12px]">check</span> Copied!`;
+                    btn.classList.replace('bg-primary/5', 'bg-green-50');
+                    btn.classList.replace('text-primary', 'text-green-700');
+                    setTimeout(() => {
+                        btn.innerHTML = origText;
+                        btn.classList.replace('bg-green-50', 'bg-primary/5');
+                        btn.classList.replace('text-green-700', 'text-primary');
+                    }, 1500);
+                });
+            });
+        });
+
+        // Delete button listeners
+        invitesTableBody.querySelectorAll('.delete-invite-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const token = btn.getAttribute('data-token');
+                if (confirm('Are you sure you want to delete/revoke this review link? Customers will no longer be able to use it.')) {
+                    await deleteInvite(token);
+                }
+            });
+        });
+    }
+
+    async function createInvite(type) {
+        try {
+            const res = await fetch(`${API_BASE}/api/reviews/invites`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type })
+            });
+            if (res.ok) {
+                loadInvites();
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Failed to generate review link');
+            }
+        } catch (err) {
+            console.error('Error creating invite:', err);
+        }
+    }
+
+    async function deleteInvite(token) {
+        try {
+            const res = await fetch(`${API_BASE}/api/reviews/invites/${token}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                loadInvites();
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Failed to delete invite');
+            }
+        } catch (err) {
+            console.error('Error deleting invite:', err);
+        }
+    }
+
+    if (btnGenSingle) {
+        btnGenSingle.addEventListener('click', () => createInvite('single'));
+    }
+    if (btnGenMulti) {
+        btnGenMulti.addEventListener('click', () => createInvite('multi'));
     }
 
     // Run auth check on load
