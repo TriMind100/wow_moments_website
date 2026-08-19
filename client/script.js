@@ -846,21 +846,103 @@ void main() {
             }
         }
 
-        // Scroll functionality
-        if (prevBtn && nextBtn) {
-            const getScrollAmount = () => {
-                const firstCard = container.querySelector('.review-card');
-                return firstCard ? firstCard.offsetWidth + 24 : 320;
-            };
+        // ─── Auto-Scroll & Swipe Management ──────────────────────────────
+        let autoScrollInterval = null;
+        let isUserInteracting = false;
+        let resumeTimeout = null;
+
+        const getScrollAmount = () => {
+            const firstCard = container.querySelector('.review-card');
+            return firstCard ? firstCard.offsetWidth + 24 : 320;
+        };
+
+        function autoAdvanceReview() {
+            if (isUserInteracting) return;
+            const maxScroll = container.scrollWidth - container.clientWidth;
+            if (maxScroll <= 15) return; // No need to scroll if all reviews fit in view
+
+            const scrollAmount = getScrollAmount();
+            // If user or carousel reached the end (within 15px), loop back smoothly to start
+            if (container.scrollLeft >= maxScroll - 15) {
+                container.scrollTo({ left: 0, behavior: 'smooth' });
+            } else {
+                container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            }
+        }
+
+        function startAutoScroll() {
+            stopAutoScroll();
+            // Automatically swipe to next review card every 3.5 seconds
+            autoScrollInterval = setInterval(autoAdvanceReview, 3500);
+        }
+
+        function stopAutoScroll() {
+            if (autoScrollInterval) {
+                clearInterval(autoScrollInterval);
+                autoScrollInterval = null;
+            }
+        }
+
+        function pauseAndResumeAutoScroll(delay = 5000) {
+            isUserInteracting = true;
+            if (resumeTimeout) clearTimeout(resumeTimeout);
+            resumeTimeout = setTimeout(() => {
+                isUserInteracting = false;
+            }, delay);
+        }
+
+        // Scroll button handlers
+        if (prevBtn) {
             prevBtn.addEventListener('click', () => {
+                pauseAndResumeAutoScroll(5000);
                 container.scrollBy({ left: -getScrollAmount(), behavior: 'smooth' });
             });
-            nextBtn.addEventListener('click', () => {
-                container.scrollBy({ left: getScrollAmount(), behavior: 'smooth' });
-            });
-
-            container.addEventListener('scroll', updateArrows, { passive: true });
         }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                pauseAndResumeAutoScroll(5000);
+                const maxScroll = container.scrollWidth - container.clientWidth;
+                if (container.scrollLeft >= maxScroll - 15) {
+                    container.scrollTo({ left: 0, behavior: 'smooth' });
+                } else {
+                    container.scrollBy({ left: getScrollAmount(), behavior: 'smooth' });
+                }
+            });
+        }
+
+        container.addEventListener('scroll', updateArrows, { passive: true });
+
+        // Pause auto-scroll on desktop hover
+        container.addEventListener('mouseenter', () => { isUserInteracting = true; });
+        container.addEventListener('mouseleave', () => { isUserInteracting = false; });
+
+        // Pause auto-scroll when customer is touching/swiping on mobile
+        container.addEventListener('touchstart', () => pauseAndResumeAutoScroll(6000), { passive: true });
+        container.addEventListener('touchmove', () => pauseAndResumeAutoScroll(6000), { passive: true });
+        container.addEventListener('touchend', () => pauseAndResumeAutoScroll(4000), { passive: true });
+
+        // Only run auto-scroll timer when reviews section is visible on screen
+        const reviewsSection = document.getElementById('reviews');
+        if (reviewsSection && 'IntersectionObserver' in window) {
+            const reviewObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        startAutoScroll();
+                    } else {
+                        stopAutoScroll();
+                    }
+                });
+            }, { threshold: 0.1 });
+            reviewObserver.observe(reviewsSection);
+        } else {
+            startAutoScroll();
+        }
+
+        // Pause when tab is in background
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) stopAutoScroll();
+            else startAutoScroll();
+        });
 
         function updateArrows() {
             if (!prevBtn || !nextBtn) return;
