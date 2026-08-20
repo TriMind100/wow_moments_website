@@ -34,53 +34,41 @@ Render is ideal for persistent Node.js servers. The codebase includes a built-in
 2. Click **New +** and select **Web Service**.
 3. Connect your GitHub repository containing the Wow Moments code.
 4. Configure the Web Service settings:
-   - **Name**: `wow-moments-backend` (or your preferred name)
+   - **Name**: `wow_moments_website_backend` (or your preferred name)
    - **Runtime**: `Node`
    - **Build Command**: `npm install && cd server && npm install`
-   - **Start Command**: `node server.js` (or `npm run start` from the root)
+   - **Start Command**: `node --max-old-space-size=384 server.js` (or `npm start`)
 5. Under **Environment**, add the following variables:
    
    | Key | Value | Notes |
    | :--- | :--- | :--- |
+   | `NODE_OPTIONS` | `--max-old-space-size=384` | **Crucial:** Forces Node.js garbage collection to stay strictly within Render's 512MB RAM limit |
    | `PORT` | `3000` | Port the app listens on |
    | `NODE_ENV` | `production` | Set to production |
    | `MONGODB_URI` | `your_mongodb_connection_string` | Obtained from MongoDB Atlas |
    | `ADMIN_USERNAME` | `your_secure_admin_username` | Admin login username |
    | `ADMIN_PASSWORD` | `your_secure_admin_password` | Admin login password (automatically encrypted at server startup) |
    | `JWT_SECRET` | `a_long_random_jwt_secret_key` | Secret key used for admin session signing |
-   | `RENDER_EXTERNAL_URL` | `https://your-app-name.onrender.com` | Your public Render URL (triggers the 3-min health checkup keep-alive loop) |
+   | `RENDER_EXTERNAL_URL` | `https://your-app-name.onrender.com` | Your public Render URL (runs internal health ping) |
 
 6. Click **Deploy Web Service**.
 
 ---
 
-## 3. Deploying to Vercel (Serverless)
+## 3. Deploying to Vercel (Serverless Alternative)
 
-The repository contains a `vercel.json` file in the root, configured to automatically package and build the backend Node.js endpoints and serve static client files serverless.
-
-### Steps to Deploy:
-1. Log in to [Vercel](https://vercel.com).
-2. Click **Add New** -> **Project**.
-3. Import your GitHub repository.
-4. In the **Configure Project** step:
-   - Keep the **Framework Preset** as `Other`.
-   - Keep the Root Directory as `./`.
-5. Expand the **Environment Variables** panel and add:
-
-   | Key | Value |
-   | :--- | :--- |
-   | `MONGODB_URI` | `your_mongodb_connection_string` |
-   | `ADMIN_USERNAME` | `your_secure_admin_username` |
-   | `ADMIN_PASSWORD` | `your_secure_admin_password` |
-   | `JWT_SECRET` | `your_jwt_secret_key` |
-
-6. Click **Deploy**. Vercel will build the project using the configuration in `vercel.json`.
+The repository contains a `vercel.json` file in the root, configured to automatically package and build the backend Node.js endpoints and serve static client files serverless. **Note:** Vercel functions do not sleep or require keep-alive pings.
 
 ---
 
-## 4. Keep-Alive Mechanism
+## 4. Keeping Render Awake (Prevent 15-min Inactivity Sleep)
 
-The backend includes a health keep-alive task that operates automatically:
-- Every **3 minutes**, the server pings the `/api/health` checkup route.
-- If deployed on **Render**, this prevents the server from spinning down after 15 minutes of inactivity on the free tier.
-- To ensure it runs, make sure `RENDER_EXTERNAL_URL` (or the corresponding URL env variable) is set in your Render Web Service settings.
+Render Free Tier instances spin down to sleep after **15 minutes of inactivity** (when no external HTTP requests arrive).
+
+### Best & Most Reliable Solution: Free External Cron / Uptime Monitor
+To keep your backend alive 24/7 without consuming internal resources:
+1. Go to [cron-job.org](https://cron-job.org) or [UptimeRobot](https://uptimerobot.com) (both 100% free).
+2. Create a free HTTP monitor:
+   - **URL**: `https://your-app-name.onrender.com/api/health`
+   - **Interval**: Every **10 minutes** (or 14 minutes).
+3. This sends an authentic external HTTP request to your Render service, keeping it awake 24/7 without hitting memory ceilings.
