@@ -53,6 +53,8 @@ async function connectDB() {
             serverSelectionTimeoutMS: 8000,
             socketTimeoutMS: 10000,
             connectTimeoutMS: 8000,
+            maxPoolSize: 10,
+            minPoolSize: 1,
             retryWrites: true
         }).then(() => {
             console.log('MongoDB connected successfully.');
@@ -1252,31 +1254,37 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// Self-pinging mechanism (runs every 3 minutes)
-const HEALTH_CHECK_INTERVAL = 3 * 60 * 1000; // 3 minutes
-// If RENDER_EXTERNAL_URL is set, use it; otherwise ping locally to verify
-const serviceUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+// Self-pinging mechanism (runs every 10 minutes on Render)
+const HEALTH_CHECK_INTERVAL = 10 * 60 * 1000; // 10 minutes
+const serviceUrl = process.env.RENDER_EXTERNAL_URL;
 
-if (serviceUrl) {
-    setInterval(() => {
+if (serviceUrl && !process.env.VERCEL) {
+    const keepAliveTimer = setInterval(() => {
         try {
             const https = require('https');
             const http = require('http');
             const client = serviceUrl.startsWith('https') ? https : http;
 
-            client.get(`${serviceUrl}/api/health`, (resp) => {
-                let data = '';
-                resp.on('data', (chunk) => { data += chunk; });
+            const req = client.get(`${serviceUrl}/api/health`, { timeout: 10000 }, (resp) => {
+                resp.resume(); // Discard data immediately to free memory
                 resp.on('end', () => {
-                    console.log(`[Health Keep-Alive] Self-ping successful at ${new Date().toISOString()}`);
+                    // Completed ping
                 });
-            }).on("error", (err) => {
-                console.error(`[Health Keep-Alive] Self-ping failed: ${err.message}`);
+            });
+
+            req.on('timeout', () => {
+                req.destroy();
+            });
+
+            req.on('error', (err) => {
+                // Silently handle offline/dns error during restarts
             });
         } catch (err) {
-            console.error('[Health Keep-Alive] Error during self-ping interval:', err.message);
+            // Ignore timer exceptions
         }
     }, HEALTH_CHECK_INTERVAL);
+
+    if (keepAliveTimer.unref) keepAliveTimer.unref();
 }
 
 // ─── Start Server (Local Only) ────────────────────────────────────────────────
